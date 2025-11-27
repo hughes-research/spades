@@ -169,49 +169,6 @@ export function wouldBreakSpades(
 }
 
 /**
- * Gets the team's total bid for the round.
- */
-export function getTeamBid(
-  player1Bid: number | null,
-  player2Bid: number | null
-): number {
-  const bid1 = player1Bid === null ? 0 : Math.max(0, player1Bid);
-  const bid2 = player2Bid === null ? 0 : Math.max(0, player2Bid);
-  return bid1 + bid2;
-}
-
-/**
- * Gets the team's total tricks won.
- */
-export function getTeamTricks(
-  player1Tricks: number,
-  player2Tricks: number
-): number {
-  return player1Tricks + player2Tricks;
-}
-
-/**
- * Validates a bid.
- * Standard bids: 0-13 (0 = nil)
- * Blind nil: -1 (must be declared before seeing cards)
- */
-export function isValidBid(bid: number, isBlindNil: boolean = false): boolean {
-  if (isBlindNil) {
-    return bid === -1;
-  }
-  return bid >= 0 && bid <= 13;
-}
-
-/**
- * Checks if the combined team bids are reasonable (not over 13).
- * This is informational only - players can still bid any valid amount.
- */
-export function isTeamBidReasonable(bid1: number, bid2: number): boolean {
-  const total = Math.max(0, bid1) + Math.max(0, bid2);
-  return total <= 13;
-}
-
-/**
  * Gets the minimum guaranteed tricks based on hand strength.
  * Used by AI to estimate bids.
  */

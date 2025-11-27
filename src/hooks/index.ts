@@ -1,3 +1,2 @@
-export { useIsMobile } from "./useIsMobile";
-
-
+// Hooks barrel export
+// Add hooks here as needed

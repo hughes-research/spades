@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { motion } from "framer-motion";
+import { formatBid } from "@/lib/game/scoring";
 
 interface PlayerLabelProps {
   name: string;
@@ -9,16 +10,6 @@ interface PlayerLabelProps {
   tricks: number;
   isCurrentPlayer: boolean;
   isHuman?: boolean;
-}
-
-/**
- * Formats a bid for display.
- */
-function formatBid(bid: number | null): string {
-  if (bid === null) return "-";
-  if (bid === -1) return "BN";
-  if (bid === 0) return "N";
-  return String(bid);
 }
 
 /**
@@ -44,7 +35,7 @@ export const PlayerLabel = memo(function PlayerLabel({
           textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
         }}
       >
-        {name}: {tricks}/{formatBid(bid)}
+        {name}: {tricks}/{formatBid(bid, true)}
       </span>
     </motion.div>
   );

@@ -198,10 +198,7 @@ export const GameTable = memo(function GameTable() {
 
       {/* Center trick area */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-        <TrickArea
-          currentTrick={round.currentTrick}
-          lastTrickWinner={round.tricks[round.tricks.length - 1]?.winner}
-        />
+        <TrickArea currentTrick={round.currentTrick} />
       </div>
 
       {/* Player (South) */}

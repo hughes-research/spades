@@ -185,18 +185,6 @@ export function getCardsOfSuit(cards: Card[], suit: Suit): Card[] {
 }
 
 /**
- * Checks if a hand contains any cards of a specific suit.
- * Quick check without creating filtered array.
- * 
- * @param {Card[]} cards - Cards to check
- * @param {Suit} suit - Suit to look for
- * @returns {boolean} True if at least one card of the suit exists
- */
-export function hasSuit(cards: Card[], suit: Suit): boolean {
-  return cards.some((card) => card.suit === suit);
-}
-
-/**
  * Counts spades in a hand.
  * Important for bidding strategy (spades are trump).
  * 

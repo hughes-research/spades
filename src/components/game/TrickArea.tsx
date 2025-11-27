@@ -7,7 +7,6 @@ import { Card } from "./Card";
 
 interface TrickAreaProps {
   currentTrick: Trick | null;
-  lastTrickWinner?: PlayerPosition;
 }
 
 const positionStyles: Record<
@@ -49,7 +48,6 @@ const cardEntryVariants = {
 
 export const TrickArea = memo(function TrickArea({
   currentTrick,
-  lastTrickWinner,
 }: TrickAreaProps) {
   return (
     <div className="relative w-64 h-64 flex items-center justify-center">

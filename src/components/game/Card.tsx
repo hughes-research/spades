@@ -12,12 +12,9 @@ interface CardProps {
   isPlayable?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
-  index?: number;
-  total?: number;
   size?: "sm" | "md" | "lg";
   animationDelay?: number;
   className?: string;
-  force2D?: boolean;
 }
 
 const sizeMap = {
@@ -75,12 +72,9 @@ export const Card = memo(function Card({
   isPlayable = true,
   isSelected = false,
   onClick,
-  index = 0,
-  total = 1,
   size = "md",
   animationDelay = 0,
   className = "",
-  force2D = false,
 }: CardProps) {
   const dimensions = sizeMap[size];
   const [isHovered, setIsHovered] = useState(false);

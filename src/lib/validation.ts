@@ -60,21 +60,9 @@ export function isInteger(value: unknown): value is number {
 }
 
 /**
- * Validates that a string is not empty and within max length.
- */
-export function isValidString(value: unknown, maxLength: number = 255): value is string {
-  return typeof value === "string" && value.length > 0 && value.length <= maxLength;
-}
-
-/**
  * Maximum allowed request body size in bytes (1MB).
  */
 export const MAX_REQUEST_BODY_SIZE = 1024 * 1024;
-
-/**
- * Maximum allowed JSON depth to prevent deeply nested attacks.
- */
-export const MAX_JSON_DEPTH = 10;
 
 /**
  * Validates that a request body is within acceptable size limits.

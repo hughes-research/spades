@@ -244,43 +244,13 @@ export function checkWinner(
 }
 
 /**
- * Gets score summary for display.
- */
-export function getScoreSummary(
-  playerTeam: TeamScore,
-  opponentTeam: TeamScore
-): {
-  playerScore: number;
-  opponentScore: number;
-  playerBags: number;
-  opponentBags: number;
-  playerToWin: number;
-  opponentToWin: number;
-} {
-  return {
-    playerScore: playerTeam.score,
-    opponentScore: opponentTeam.score,
-    playerBags: playerTeam.bags,
-    opponentBags: opponentTeam.bags,
-    playerToWin: Math.max(0, WINNING_SCORE - playerTeam.score),
-    opponentToWin: Math.max(0, WINNING_SCORE - opponentTeam.score),
-  };
-}
-
-/**
- * Formats a score for display with sign.
- */
-export function formatScore(score: number): string {
-  if (score >= 0) return `+${score}`;
-  return String(score);
-}
-
-/**
  * Formats a bid for display.
+ * @param bid - The bid value (null, -1 for blind nil, 0 for nil, or 1-13)
+ * @param short - If true, uses abbreviated forms (BN, N) instead of full names
  */
-export function formatBid(bid: number | null): string {
+export function formatBid(bid: number | null, short: boolean = false): string {
   if (bid === null) return "-";
-  if (bid === -1) return "Blind Nil";
-  if (bid === 0) return "Nil";
+  if (bid === -1) return short ? "BN" : "Blind Nil";
+  if (bid === 0) return short ? "N" : "Nil";
   return String(bid);
 }
