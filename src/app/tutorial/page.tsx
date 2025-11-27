@@ -6,8 +6,11 @@ import Link from "next/link";
 import { Breadcrumbs, Button } from "@/components/ui";
 import { SuitIcon } from "@/components/svg";
 import { CardFace } from "@/components/game/CardFace";
+import { FONTS } from "@/lib/styles";
 
-const tutorialSteps = [
+const SUIT_ORDER = ["spades", "hearts", "diamonds", "clubs"] as const;
+
+const TUTORIAL_STEPS = [
   {
     title: "Welcome to Spades",
     content: `Spades is a trick-taking card game played with a standard 52-card deck. 
@@ -64,112 +67,34 @@ const tutorialSteps = [
     Good luck and have fun!`,
     visual: "winning",
   },
-];
+] as const;
 
-export default function TutorialPage() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const step = tutorialSteps[currentStep];
-
-  const handleNext = () => {
-    if (currentStep < tutorialSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
+function TeamPosition({ label, isPartner, position }: { 
+  label: string; 
+  isPartner: boolean; 
+  position: string;
+}) {
+  const positionStyles: Record<string, string> = {
+    top: "absolute top-0 left-1/2 -translate-x-1/2",
+    left: "absolute left-0 top-1/2 -translate-y-1/2",
+    right: "absolute right-0 top-1/2 -translate-y-1/2",
+    bottom: "absolute bottom-0 left-1/2 -translate-x-1/2",
   };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
+  
   return (
-    <div className="min-h-screen flex flex-col p-4">
-      {/* Header */}
-      <header className="mb-6">
-        <Breadcrumbs
-          items={[
-            { label: "Tutorial" },
-          ]}
-        />
-      </header>
-
-      {/* Progress bar */}
-      <div className="max-w-2xl mx-auto w-full mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          {tutorialSteps.map((_, index) => (
-            <motion.div
-              key={index}
-              className={`h-1 flex-1 rounded-full ${
-                index <= currentStep ? "bg-gold" : "bg-text-muted/20"
-              }`}
-              initial={false}
-              animate={{
-                backgroundColor:
-                  index <= currentStep
-                    ? "var(--gold)"
-                    : "rgba(107, 107, 123, 0.2)",
-              }}
-            />
-          ))}
-        </div>
-        <div className="text-center text-xs text-text-muted">
-          Step {currentStep + 1} of {tutorialSteps.length}
-        </div>
+    <div className={`${positionStyles[position]} text-center`}>
+      <div className={`
+        w-12 h-12 rounded-full flex items-center justify-center border
+        ${isPartner 
+          ? "bg-indigo-dark text-gold border-gold/50" 
+          : "bg-midnight text-text-muted border-text-muted/30"
+        }
+      `}>
+        {label}
       </div>
-
-      {/* Content */}
-      <main className="flex-1 flex items-center justify-center">
-        <div className="max-w-2xl w-full">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              className="glass-panel p-8 rounded-2xl"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2
-                className="text-2xl text-gold font-display mb-4 text-center tracking-wider"
-                style={{ fontFamily: "var(--font-cinzel)" }}
-              >
-                {step.title}
-              </h2>
-
-              {/* Visual component */}
-              <div className="mb-6 flex justify-center">
-                <TutorialVisual type={step.visual} />
-              </div>
-
-              {/* Content text */}
-              <p className="text-white font-bold text-center whitespace-pre-line leading-relaxed">
-                {step.content}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-6">
-            <Button
-              variant="ghost"
-              onClick={handlePrev}
-              disabled={currentStep === 0}
-            >
-              Previous
-            </Button>
-
-            {currentStep === tutorialSteps.length - 1 ? (
-              <Link href="/">
-                <Button variant="primary">Start Playing</Button>
-              </Link>
-            ) : (
-              <Button variant="primary" onClick={handleNext}>
-                Next
-              </Button>
-            )}
-          </div>
-        </div>
-      </main>
+      <div className="text-xs text-white font-bold mt-1">
+        {position === "bottom" ? "You" : isPartner ? "Partner" : "Opponent"}
+      </div>
     </div>
   );
 }
@@ -179,12 +104,12 @@ function TutorialVisual({ type }: { type: string }) {
     case "intro":
       return (
         <div className="flex gap-2">
-          {(["spades", "hearts", "diamonds", "clubs"] as const).map((suit) => (
+          {SUIT_ORDER.map((suit, i) => (
             <motion.div
               key={suit}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * ["spades", "hearts", "diamonds", "clubs"].indexOf(suit) }}
+              transition={{ delay: i * 0.1 }}
             >
               <SuitIcon suit={suit} size={40} />
             </motion.div>
@@ -195,30 +120,10 @@ function TutorialVisual({ type }: { type: string }) {
     case "teams":
       return (
         <div className="relative w-48 h-48">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 text-center">
-            <div className="w-12 h-12 rounded-full bg-indigo-dark flex items-center justify-center text-gold border border-gold/50">
-              N
-            </div>
-            <div className="text-xs text-white font-bold mt-1">Partner</div>
-          </div>
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 text-center">
-            <div className="w-12 h-12 rounded-full bg-midnight flex items-center justify-center text-text-muted border border-text-muted/30">
-              W
-            </div>
-            <div className="text-xs text-white font-bold mt-1">Opponent</div>
-          </div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 text-center">
-            <div className="w-12 h-12 rounded-full bg-midnight flex items-center justify-center text-text-muted border border-text-muted/30">
-              E
-            </div>
-            <div className="text-xs text-white font-bold mt-1">Opponent</div>
-          </div>
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-            <div className="w-12 h-12 rounded-full bg-indigo-dark flex items-center justify-center text-gold border border-gold/50">
-              S
-            </div>
-            <div className="text-xs text-white font-bold mt-1">You</div>
-          </div>
+          <TeamPosition label="N" isPartner position="top" />
+          <TeamPosition label="W" isPartner={false} position="left" />
+          <TeamPosition label="E" isPartner={false} position="right" />
+          <TeamPosition label="S" isPartner position="bottom" />
         </div>
       );
 
@@ -228,9 +133,7 @@ function TutorialVisual({ type }: { type: string }) {
           <div style={{ width: 60, height: 84 }}>
             <CardFace suit="spades" rank="A" width={60} height={84} />
           </div>
-          <div className="text-4xl text-gold font-mono" style={{ fontFamily: "var(--font-fira-code)" }}>
-            ?
-          </div>
+          <div className="text-4xl text-gold font-mono" style={{ fontFamily: FONTS.mono }}>?</div>
           <div className="text-white font-bold">= How many tricks?</div>
         </div>
       );
@@ -238,18 +141,16 @@ function TutorialVisual({ type }: { type: string }) {
     case "playing":
       return (
         <div className="flex gap-2">
-          <div style={{ width: 50, height: 70 }}>
-            <CardFace suit="hearts" rank="7" width={50} height={70} />
-          </div>
-          <div style={{ width: 50, height: 70 }}>
-            <CardFace suit="hearts" rank="K" width={50} height={70} />
-          </div>
-          <div style={{ width: 50, height: 70 }}>
-            <CardFace suit="hearts" rank="3" width={50} height={70} />
-          </div>
-          <div style={{ width: 50, height: 70 }}>
-            <CardFace suit="spades" rank="2" width={50} height={70} />
-          </div>
+          {[
+            { suit: "hearts" as const, rank: "7" as const },
+            { suit: "hearts" as const, rank: "K" as const },
+            { suit: "hearts" as const, rank: "3" as const },
+            { suit: "spades" as const, rank: "2" as const },
+          ].map((card, i) => (
+            <div key={i} style={{ width: 50, height: 70 }}>
+              <CardFace suit={card.suit} rank={card.rank} width={50} height={70} />
+            </div>
+          ))}
         </div>
       );
 
@@ -269,42 +170,39 @@ function TutorialVisual({ type }: { type: string }) {
     case "scoring":
       return (
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-white font-bold">Bid 4, Win 5 =</span>
-            <span className="text-success font-mono text-xl" style={{ fontFamily: "var(--font-fira-code)" }}>
-              +41
-            </span>
-          </div>
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-white font-bold">Bid 4, Win 3 =</span>
-            <span className="text-danger font-mono text-xl" style={{ fontFamily: "var(--font-fira-code)" }}>
-              -40
-            </span>
-          </div>
+          {[
+            { text: "Bid 4, Win 5 =", value: "+41", color: "text-success" },
+            { text: "Bid 4, Win 3 =", value: "-40", color: "text-danger" },
+          ].map(({ text, value, color }) => (
+            <div key={text} className="flex items-center justify-center gap-4">
+              <span className="text-white font-bold">{text}</span>
+              <span className={`font-mono text-xl ${color}`} style={{ fontFamily: FONTS.mono }}>
+                {value}
+              </span>
+            </div>
+          ))}
         </div>
       );
 
     case "nil":
       return (
         <div className="space-y-3 text-center">
-          <div className="flex items-center justify-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-gold/20 text-gold text-sm">Nil</span>
-            <span className="text-white font-bold">0 tricks = +100/-100</span>
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-gold text-midnight text-sm">Blind Nil</span>
-            <span className="text-white font-bold">+200/-200</span>
-          </div>
+          {[
+            { label: "Nil", bg: "bg-gold/20", text: "text-gold", desc: "0 tricks = +100/-100" },
+            { label: "Blind Nil", bg: "bg-gold", text: "text-midnight", desc: "+200/-200" },
+          ].map(({ label, bg, text, desc }) => (
+            <div key={label} className="flex items-center justify-center gap-2">
+              <span className={`px-3 py-1 rounded-full ${bg} ${text} text-sm`}>{label}</span>
+              <span className="text-white font-bold">{desc}</span>
+            </div>
+          ))}
         </div>
       );
 
     case "winning":
       return (
         <div className="text-center">
-          <div
-            className="text-5xl font-mono text-gold mb-2"
-            style={{ fontFamily: "var(--font-fira-code)" }}
-          >
+          <div className="text-5xl font-mono text-gold mb-2" style={{ fontFamily: FONTS.mono }}>
             500
           </div>
           <div className="text-white font-bold">points to win</div>
@@ -316,4 +214,87 @@ function TutorialVisual({ type }: { type: string }) {
   }
 }
 
+export default function TutorialPage() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const step = TUTORIAL_STEPS[currentStep];
+  const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
 
+  return (
+    <div className="min-h-screen flex flex-col p-4">
+      <header className="mb-6">
+        <Breadcrumbs items={[{ label: "Tutorial" }]} />
+      </header>
+
+      {/* Progress bar */}
+      <div className="max-w-2xl mx-auto w-full mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          {TUTORIAL_STEPS.map((_, index) => (
+            <motion.div
+              key={index}
+              className={`h-1 flex-1 rounded-full ${index <= currentStep ? "bg-gold" : "bg-text-muted/20"}`}
+              initial={false}
+              animate={{
+                backgroundColor: index <= currentStep ? "var(--gold)" : "rgba(107, 107, 123, 0.2)",
+              }}
+            />
+          ))}
+        </div>
+        <div className="text-center text-xs text-text-muted">
+          Step {currentStep + 1} of {TUTORIAL_STEPS.length}
+        </div>
+      </div>
+
+      {/* Content */}
+      <main className="flex-1 flex items-center justify-center">
+        <div className="max-w-2xl w-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              className="glass-panel p-8 rounded-2xl"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h2
+                className="text-2xl text-gold font-display mb-4 text-center tracking-wider"
+                style={{ fontFamily: FONTS.display }}
+              >
+                {step.title}
+              </h2>
+              <div className="mb-6 flex justify-center">
+                <TutorialVisual type={step.visual} />
+              </div>
+              <p className="text-white font-bold text-center whitespace-pre-line leading-relaxed">
+                {step.content}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-6">
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
+              disabled={currentStep === 0}
+            >
+              Previous
+            </Button>
+            {isLastStep ? (
+              <Link href="/">
+                <Button variant="primary">Start Playing</Button>
+              </Link>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={() => setCurrentStep((s) => s + 1)}
+              >
+                Next
+              </Button>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -1,13 +1,61 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/svg";
-import { Button } from "@/components/ui";
+import { Button, Modal } from "@/components/ui";
 import { useGameStore } from "@/lib/store";
 import { Difficulty } from "@/lib/game/types";
+import { FONTS, COLORS } from "@/lib/styles";
+
+const DIFFICULTY_OPTIONS: { name: string; description: string; difficulty: Difficulty; recommended?: boolean }[] = [
+  { name: "Easy", description: "AI makes more mistakes, good for learning", difficulty: "easy" },
+  { name: "Medium", description: "Balanced gameplay with strategic AI", difficulty: "medium", recommended: true },
+  { name: "Hard", description: "Expert AI with card counting", difficulty: "hard" },
+];
+
+function DifficultyOption({
+  name,
+  description,
+  difficulty,
+  recommended = false,
+  onClick,
+}: {
+  name: string;
+  description: string;
+  difficulty: Difficulty;
+  recommended?: boolean;
+  onClick: (d: Difficulty) => void;
+}) {
+  return (
+    <motion.button
+      className={`
+        w-full p-4 rounded-xl text-left transition-all
+        ${recommended
+          ? "bg-indigo-dark/60 border-2 border-gold/50"
+          : "bg-midnight/40 border border-white/20 hover:border-gold/30"
+        }
+      `}
+      whileHover={{ scale: 1.02, x: 4 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => onClick(difficulty)}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-lg font-display" style={{ fontFamily: FONTS.display, color: COLORS.white }}>
+          {name}
+        </span>
+        {recommended && (
+          <span className="text-xs bg-gold/10 px-2 py-1 rounded-full" style={{ color: COLORS.gold }}>
+            Recommended
+          </span>
+        )}
+      </div>
+      <p className="text-sm mt-1" style={{ color: COLORS.muted }}>{description}</p>
+    </motion.button>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -16,31 +64,17 @@ export default function HomePage() {
   const currentGame = useGameStore((s) => s.id);
   const phase = useGameStore((s) => s.phase);
 
-  const handleNewGame = () => {
-    setShowDifficultyModal(true);
-  };
-
   const handleSelectDifficulty = (difficulty: Difficulty) => {
     startNewGame(difficulty);
     setShowDifficultyModal(false);
     router.push("/game");
   };
 
-  const handleContinue = () => {
-    router.push("/game");
-  };
-
   const canContinue = currentGame && phase !== "waiting" && phase !== "game_over";
 
   const menuItems = [
-    {
-      label: "New Game",
-      onClick: handleNewGame,
-      primary: true,
-    },
-    ...(canContinue
-      ? [{ label: "Continue Game", onClick: handleContinue, primary: false }]
-      : []),
+    { label: "New Game", onClick: () => setShowDifficultyModal(true), primary: true },
+    ...(canContinue ? [{ label: "Continue Game", onClick: () => router.push("/game"), primary: false }] : []),
     { label: "Tutorial", href: "/tutorial", primary: false },
     { label: "Game History", href: "/history", primary: false },
     { label: "Settings", href: "/settings", primary: false },
@@ -73,11 +107,7 @@ export default function HomePage() {
           >
             {item.href ? (
               <Link href={item.href} className="block">
-                <Button
-                  variant={item.primary ? "primary" : "secondary"}
-                  size="lg"
-                  className="w-full"
-                >
+                <Button variant={item.primary ? "primary" : "secondary"} size="lg" className="w-full">
                   {item.label}
                 </Button>
               </Link>
@@ -98,7 +128,7 @@ export default function HomePage() {
       {/* Footer */}
       <motion.footer
         className="absolute bottom-4 text-center text-xs"
-        style={{ color: "#cccccc" }}
+        style={{ color: COLORS.muted }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
@@ -107,109 +137,32 @@ export default function HomePage() {
       </motion.footer>
 
       {/* Difficulty selection modal */}
-      <AnimatePresence>
-        {showDifficultyModal && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-midnight-deep/90 backdrop-blur-md"
-              onClick={() => setShowDifficultyModal(false)}
-            />
-            <motion.div
-              className="relative glass-panel p-8 rounded-2xl max-w-md w-full"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-            >
-              <h2
-                className="text-2xl font-display text-center mb-6 tracking-wider"
-                style={{ fontFamily: "var(--font-cinzel)", color: "#ffd700" }}
-              >
-                SELECT DIFFICULTY
-              </h2>
-
-              <div className="space-y-4">
-                <DifficultyOption
-                  name="Easy"
-                  description="AI makes more mistakes, good for learning"
-                  difficulty="easy"
-                  onClick={handleSelectDifficulty}
-                />
-                <DifficultyOption
-                  name="Medium"
-                  description="Balanced gameplay with strategic AI"
-                  difficulty="medium"
-                  onClick={handleSelectDifficulty}
-                  recommended
-                />
-                <DifficultyOption
-                  name="Hard"
-                  description="Expert AI with card counting"
-                  difficulty="hard"
-                  onClick={handleSelectDifficulty}
-                />
-              </div>
-
-              <button
-                className="mt-6 w-full text-center text-sm"
-                style={{ color: "#cccccc" }}
-                onClick={() => setShowDifficultyModal(false)}
-              >
-                Cancel
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function DifficultyOption({
-  name,
-  description,
-  difficulty,
-  onClick,
-  recommended = false,
-}: {
-  name: string;
-  description: string;
-  difficulty: Difficulty;
-  onClick: (d: Difficulty) => void;
-  recommended?: boolean;
-}) {
-  return (
-    <motion.button
-      className={`
-        w-full p-4 rounded-xl text-left transition-all
-        ${
-          recommended
-            ? "bg-indigo-dark/60 border-2 border-gold/50"
-            : "bg-midnight/40 border border-white/20 hover:border-gold/30"
-        }
-      `}
-      whileHover={{ scale: 1.02, x: 4 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => onClick(difficulty)}
-    >
-      <div className="flex items-center justify-between">
-        <span
-          className="text-lg font-display"
-          style={{ fontFamily: "var(--font-cinzel)", color: "#ffffff" }}
+      <Modal isOpen={showDifficultyModal} onClose={() => setShowDifficultyModal(false)}>
+        <h2
+          className="text-2xl font-display text-center mb-6 tracking-wider"
+          style={{ fontFamily: FONTS.display, color: COLORS.gold }}
         >
-          {name}
-        </span>
-        {recommended && (
-          <span className="text-xs bg-gold/10 px-2 py-1 rounded-full" style={{ color: "#ffd700" }}>
-            Recommended
-          </span>
-        )}
-      </div>
-      <p className="text-sm mt-1" style={{ color: "#cccccc" }}>{description}</p>
-    </motion.button>
+          SELECT DIFFICULTY
+        </h2>
+
+        <div className="space-y-4">
+          {DIFFICULTY_OPTIONS.map((opt) => (
+            <DifficultyOption
+              key={opt.difficulty}
+              {...opt}
+              onClick={handleSelectDifficulty}
+            />
+          ))}
+        </div>
+
+        <button
+          className="mt-6 w-full text-center text-sm"
+          style={{ color: COLORS.muted }}
+          onClick={() => setShowDifficultyModal(false)}
+        >
+          Cancel
+        </button>
+      </Modal>
+    </div>
   );
 }

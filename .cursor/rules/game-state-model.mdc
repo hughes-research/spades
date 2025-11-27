@@ -1,49 +1,47 @@
 ---
-description: Provides game state models and data structures for tracking card game progression, player states, and scoring in Spades
+description: Defines core Spades game state data structures and type definitions for tracking gameplay elements
 ---
 
 
 # game-state-model
 
-The game state model tracks and manages the complete state of a Spades card game through the following key components:
+The game state model tracks critical Spades gameplay elements through defined data structures and relationships:
 
-## Core State Components (src/lib/store.ts)
+## Core State Components
+- Player states: Track current player positions (4 total)
+- Team assignments: North/South vs East/West partnerships
+- Active game phase tracking
+- Round progression state
+- Current trick state
 
-### Player State
-- Current position/seat assignments 
-- Team affiliations (North-South vs East-West)
-- Individual bid amounts
-- Tricks won per player
-- Hand contents
+## Bidding System
+- Bid collection per player
+- Nil/Blind nil bid tracking
+- Team bid aggregation
+- Bid validation states
 
-### Team State
-- Combined team bids
-- Accumulated trick counts
-- Running score totals
-- Bag (overtrick) tracking
-- Special bid states (nil/blind nil)
+## Trick Management
+- Active trick participants
+- Lead card tracking
+- Played cards sequence
+- Trick winner determination state
+- Trump (Spades) break status
 
-### Round State
-- Active player turn tracking
-- Current trick cards
-- Lead suit requirements
-- Spades broken status
-- Trick history
+## Scoring Elements
+- Team score accumulation
+- Bags (overtricks) counting
+- Nil/Blind nil bonus tracking
+- Round score calculations
+- Running game totals
 
-### Score Tracking (src/lib/game/scoring.ts)
-- Bid fulfillment tracking
-- Nil/blind nil bonus/penalty calculation
-- Bag accumulation and penalties
-- Team score aggregation
-- Win condition validation (500 points)
-
-### Game Progression
+## State Flow Control
+Located in src/lib/store.ts:
+- Game phase transitions
 - Turn sequencing
-- Round completion logic
-- Game completion detection
-- Winner determination
+- Round lifecycle management
+- Score updates
 
-Importance Score: 85/100
+Business Impact Score: 95/100 (Critical game state tracking for core mechanics)
 
 $END$
 

@@ -10,50 +10,41 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-The Spades game implementation centers around four core business components that handle game rules, AI strategy, scoring, and state management.
+The Spades implementation centers around five core business components that handle game rules, AI strategy, scoring, state management, and specialized card handling.
 
-## Core Game Engine Architecture
+## Game Rules Engine (src/lib/game/rules.ts)
+Core Spades gameplay logic enforcing official rules:
+- Trick-taking mechanics with spades breaking validation
+- Suit following requirements and play validation
+- Trump card hierarchy evaluation
+- Valid move calculation based on current game state
 
-The game engine (src/lib/game/rules.ts) implements the official Spades card game ruleset, handling:
-- Trump card mechanics with spades as permanent trump
-- Suit following requirements
-- Spades breaking rules
-- Nil and blind nil bid validation
+## AI Strategy System (src/lib/game/ai.ts)
+Multi-tiered artificial intelligence for computer opponents:
+- Three distinct difficulty levels with unique behaviors
+- Partnership-aware bidding strategies
+- Coordinated card play decisions
+- Probability-based trick tracking
 
-## AI Strategy System
+## Scoring Implementation (src/lib/game/scoring.ts)
+Tournament-standard scoring mechanics:
+- Nil and blind nil bid resolution
+- Overtrick (bag) management with penalties
+- Partnership score calculations
+- Game ending conditions with tiebreakers
 
-The AI component (src/lib/game/ai.ts) provides multiple difficulty levels through:
-- Adaptive card selection based on partner plays
-- Bid calculation using hand strength analysis
-- Strategic spade management
-- Team-oriented play coordination
+## Game State Controller (src/lib/store.ts)
+Comprehensive game flow management:
+- Full game lifecycle coordination
+- Player rotation and turn sequencing
+- Bid collection and verification
+- Round progression rules
 
-## Scoring Framework
-
-The scoring system (src/lib/game/scoring.ts) manages:
-- Standard trick scoring (10 points per trick)
-- Nil/Blind nil rewards (+100/+200) and penalties (-100/-200)
-- Bag accumulation tracking
-- Ten-bag penalty assessment (-100 points)
-- Victory condition monitoring (500 points)
-
-## Game State Control
-
-State management (src/lib/store.ts) coordinates:
-- Turn sequencing
-- Team coordination
-- Round and trick progression
-- Score aggregation
-- Game flow control
-
-## Domain-Specific Features
-
-The implementation specializes in:
-1. Partnership mechanics
-2. Three-tiered AI difficulty system
-3. Complex scoring with bag penalties
-4. Hand evaluation algorithms
-5. Team bidding coordination
+## Specialized Card Management (src/lib/game/deck.ts)
+Spades-specific card handling:
+- Strategic hand evaluation for bidding
+- Suit distribution analysis
+- Specialized card sorting for gameplay
 
 $END$
 

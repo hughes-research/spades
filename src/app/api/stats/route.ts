@@ -1,148 +1,115 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { logger } from "@/lib/logger";
-import { rateLimit, addRateLimitHeaders } from "@/lib/rateLimit";
-import { isNonNegativeInteger, validateRequestSize } from "@/lib/validation";
+import {
+  validateRequest,
+  successResponse,
+  errorResponse,
+  withErrorHandler,
+} from "@/lib/api/utils";
+import { isNonNegativeInteger } from "@/lib/validation";
 
-// GET /api/stats - Get player statistics
-export async function GET(request: NextRequest) {
-  // Check rate limit
-  const rateLimitResponse = rateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+const DEFAULT_STATS = {
+  id: "global",
+  gamesPlayed: 0,
+  gamesWon: 0,
+  gamesLost: 0,
+  totalRounds: 0,
+  highScore: 0,
+  winStreak: 0,
+  bestStreak: 0,
+} as const;
 
-  try {
-    let stats = await prisma.stats.findUnique({
-      where: { id: "global" },
-    });
-
-    // Create default stats if none exist
-    if (!stats) {
-      stats = await prisma.stats.create({
-        data: {
-          id: "global",
-          gamesPlayed: 0,
-          gamesWon: 0,
-          gamesLost: 0,
-          totalRounds: 0,
-          highScore: 0,
-          winStreak: 0,
-          bestStreak: 0,
-        },
-      });
-    }
-
-    const response = NextResponse.json(stats);
-    return addRateLimitHeaders(response, request);
-  } catch (error) {
-    logger.error("Failed to fetch stats", { error: String(error) });
-    return NextResponse.json(
-      { error: "Failed to fetch stats" },
-      { status: 500 }
-    );
-  }
+interface StatsBody {
+  roundsPlayed?: number;
+  highScore?: number;
+  won?: boolean;
 }
 
-// POST /api/stats - Update statistics
+function validateStatsBody(body: StatsBody): string | null {
+  const { roundsPlayed, highScore, won } = body;
+
+  if (roundsPlayed !== undefined && !isNonNegativeInteger(roundsPlayed)) {
+    return "Invalid roundsPlayed value";
+  }
+  if (highScore !== undefined && !isNonNegativeInteger(highScore)) {
+    return "Invalid highScore value";
+  }
+  if (won !== undefined && typeof won !== "boolean") {
+    return "Invalid won value";
+  }
+
+  return null;
+}
+
+async function getOrCreateStats() {
+  let stats = await prisma.stats.findUnique({ where: { id: "global" } });
+  
+  if (!stats) {
+    stats = await prisma.stats.create({ data: DEFAULT_STATS });
+  }
+  
+  return stats;
+}
+
+export async function GET(request: NextRequest) {
+  const { error } = await validateRequest({ request });
+  if (error) return error;
+
+  return withErrorHandler(
+    async () => {
+      const stats = await getOrCreateStats();
+      return successResponse(stats, request);
+    },
+    "Failed to fetch stats"
+  );
+}
+
 export async function POST(request: NextRequest) {
-  // Check rate limit
-  const rateLimitResponse = rateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  const { body, error } = await validateRequest<StatsBody>({
+    request,
+    requireBody: true,
+  });
+  if (error) return error;
 
-  // Validate request size
-  const sizeError = validateRequestSize(request.headers.get("content-length"));
-  if (sizeError) {
-    return NextResponse.json({ error: sizeError }, { status: 413 });
+  const validationError = validateStatsBody(body ?? {});
+  if (validationError) {
+    return errorResponse(validationError, 400);
   }
 
-  let body: Record<string, unknown>;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON in request body" },
-      { status: 400 }
-    );
-  }
+  const { roundsPlayed, highScore, won } = body ?? {};
 
-  try {
-    const { roundsPlayed, highScore, won } = body;
+  return withErrorHandler(
+    async () => {
+      const stats = await getOrCreateStats();
+      const updates: Record<string, number> = {};
 
-    // Validate inputs
-    if (roundsPlayed !== undefined && !isNonNegativeInteger(roundsPlayed)) {
-      return NextResponse.json(
-        { error: "Invalid roundsPlayed value" },
-        { status: 400 }
-      );
-    }
-
-    if (highScore !== undefined && !isNonNegativeInteger(highScore)) {
-      return NextResponse.json(
-        { error: "Invalid highScore value" },
-        { status: 400 }
-      );
-    }
-
-    if (won !== undefined && typeof won !== "boolean") {
-      return NextResponse.json(
-        { error: "Invalid won value" },
-        { status: 400 }
-      );
-    }
-
-    let stats = await prisma.stats.findUnique({
-      where: { id: "global" },
-    });
-
-    // Auto-create stats if they don't exist (consistent behavior)
-    if (!stats) {
-      stats = await prisma.stats.create({
-        data: {
-          id: "global",
-          gamesPlayed: 0,
-          gamesWon: 0,
-          gamesLost: 0,
-          totalRounds: 0,
-          highScore: 0,
-          winStreak: 0,
-          bestStreak: 0,
-        },
-      });
-    }
-
-    const updates: Record<string, number> = {};
-
-    if (roundsPlayed) {
-      updates.totalRounds = stats.totalRounds + roundsPlayed;
-    }
-
-    if (highScore && highScore > stats.highScore) {
-      updates.highScore = highScore;
-    }
-
-    if (won !== undefined) {
-      updates.gamesPlayed = stats.gamesPlayed + 1;
-      if (won) {
-        updates.gamesWon = stats.gamesWon + 1;
-        updates.winStreak = stats.winStreak + 1;
-        updates.bestStreak = Math.max(stats.bestStreak, stats.winStreak + 1);
-      } else {
-        updates.gamesLost = stats.gamesLost + 1;
-        updates.winStreak = 0;
+      if (roundsPlayed) {
+        updates.totalRounds = stats.totalRounds + roundsPlayed;
       }
-    }
 
-    const updatedStats = await prisma.stats.update({
-      where: { id: "global" },
-      data: updates,
-    });
+      if (highScore && highScore > stats.highScore) {
+        updates.highScore = highScore;
+      }
 
-    const response = NextResponse.json(updatedStats);
-    return addRateLimitHeaders(response, request);
-  } catch (error) {
-    logger.error("Failed to update stats", { error: String(error) });
-    return NextResponse.json(
-      { error: "Failed to update stats" },
-      { status: 500 }
-    );
-  }
+      if (won !== undefined) {
+        updates.gamesPlayed = stats.gamesPlayed + 1;
+        if (won) {
+          updates.gamesWon = stats.gamesWon + 1;
+          updates.winStreak = stats.winStreak + 1;
+          updates.bestStreak = Math.max(stats.bestStreak, stats.winStreak + 1);
+        } else {
+          updates.gamesLost = stats.gamesLost + 1;
+          updates.winStreak = 0;
+        }
+      }
+
+      const updatedStats = await prisma.stats.update({
+        where: { id: "global" },
+        data: updates,
+      });
+
+      return successResponse(updatedStats, request);
+    },
+    "Failed to update stats"
+  );
 }
