@@ -1,0 +1,72 @@
+// Prisma schema for Spades card game
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Game {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  status        String   @default("in_progress") // in_progress, completed
+  difficulty    String   @default("medium") // easy, medium, hard
+  yourTeamScore Int      @default(0)
+  aiTeamScore   Int      @default(0)
+  yourTeamBags  Int      @default(0)
+  aiTeamBags    Int      @default(0)
+  winner        String?  // "you" | "ai" | null
+  currentRound  Int      @default(1)
+  rounds        Round[]
+}
+
+model Round {
+  id              String @id @default(cuid())
+  gameId          String
+  game            Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  roundNumber     Int
+  
+  // Bids (0 = nil, -1 = blind nil)
+  yourBid         Int
+  partnerBid      Int
+  opponent1Bid    Int
+  opponent2Bid    Int
+  
+  // Tricks won
+  yourTricks      Int    @default(0)
+  partnerTricks   Int    @default(0)
+  opponent1Tricks Int    @default(0)
+  opponent2Tricks Int    @default(0)
+  
+  // Scores after this round
+  yourTeamScore   Int    @default(0)
+  aiTeamScore     Int    @default(0)
+  yourTeamBags    Int    @default(0)
+  aiTeamBags      Int    @default(0)
+  
+  completed       Boolean @default(false)
+
+  @@unique([gameId, roundNumber])
+}
+
+model Settings {
+  id              String  @id @default("global")
+  difficulty      String  @default("medium") // easy, medium, hard
+  animationSpeed  String  @default("normal") // slow, normal, fast
+  showTutorial    Boolean @default(true)
+}
+
+model Stats {
+  id          String @id @default("global")
+  gamesPlayed Int    @default(0)
+  gamesWon    Int    @default(0)
+  gamesLost   Int    @default(0)
+  totalRounds Int    @default(0)
+  highScore   Int    @default(0)
+  winStreak   Int    @default(0)
+  bestStreak  Int    @default(0)
+}
