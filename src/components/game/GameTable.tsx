@@ -1,11 +1,11 @@
 "use client";
 
-import { memo, useEffect, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useGameStore } from "@/lib/store";
 import { Card as CardType, PlayerPosition } from "@/lib/game/types";
 import { getValidPlays } from "@/lib/game/rules";
 import { getHintCard } from "@/lib/game/ai";
-import { ANIMATION_DELAYS, GAME_CONSTANTS } from "@/lib/game/constants";
+import { ANIMATION_DELAYS, PLAYER_POSITIONS } from "@/lib/game/constants";
 import { Hand } from "./Hand";
 import { TrickArea } from "./TrickArea";
 import { BidSelector } from "./BidSelector";
@@ -30,7 +30,6 @@ const PlayerArea = memo(function PlayerArea({ position }: { position: PlayerPosi
   const currentTrick = useGameStore((s) => s.round.currentTrick);
   const spadesBroken = useGameStore((s) => s.round.spadesBroken);
   const playCard = useGameStore((s) => s.playCard);
-  const finishTrick = useGameStore((s) => s.finishTrick);
 
   const validPlays = useMemo(() => {
     const isLeading = !currentTrick || currentTrick.cards.length === 0;
@@ -40,17 +39,9 @@ const PlayerArea = memo(function PlayerArea({ position }: { position: PlayerPosi
   const handlePlayCard = useCallback(
     (card: CardType) => {
       if (phase !== "playing" || currentPlayer !== position) return;
-      
       playCard(position, card);
-      
-      setTimeout(() => {
-        const state = useGameStore.getState();
-        if (state.round.currentTrick?.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK) {
-          setTimeout(() => finishTrick(), ANIMATION_DELAYS.TRICK_COMPLETE_DELAY);
-        }
-      }, ANIMATION_DELAYS.DEAL_DELAY);
     },
-    [phase, currentPlayer, position, playCard, finishTrick]
+    [phase, currentPlayer, position, playCard]
   );
 
   const isCurrentPlayerTurn = currentPlayer === position && phase === "playing";
@@ -65,7 +56,7 @@ const PlayerArea = memo(function PlayerArea({ position }: { position: PlayerPosi
       position={position}
       onPlayCard={handlePlayCard}
       showCards={showCards}
-      size={position === "south" ? "lg" : "sm"}
+      size={position === PLAYER_POSITIONS.SOUTH ? "lg" : "sm"}
     />
   );
 });
@@ -81,39 +72,15 @@ export const GameTable = memo(function GameTable() {
   const opponentTeamScore = useGameStore((s) => s.opponentTeamScore);
   const winner = useGameStore((s) => s.winner);
   const difficulty = useGameStore((s) => s.difficulty);
-  const processAITurn = useGameStore((s) => s.processAITurn);
   const placeBid = useGameStore((s) => s.placeBid);
   const startNewGame = useGameStore((s) => s.startNewGame);
-  const nextRound = useGameStore((s) => s.nextRound);
 
   const [hintCard, setHintCard] = useState<CardType | null>(null);
   const [showHint, setShowHint] = useState(false);
 
-  // Process AI turns
-  useEffect(() => {
-    const currentPlayer = players[round.currentPlayer];
-    
-    if (!currentPlayer.isHuman && (phase === "bidding" || phase === "playing")) {
-      const timer = setTimeout(() => {
-        processAITurn();
-      }, ANIMATION_DELAYS.AI_TURN_DELAY);
-      return () => clearTimeout(timer);
-    }
-  }, [phase, round.currentPlayer, players, processAITurn]);
-
-  // Auto-continue after round end
-  useEffect(() => {
-    if (phase === "round_end" && !winner) {
-      const timer = setTimeout(() => {
-        nextRound();
-      }, ANIMATION_DELAYS.AUTO_CONTINUE_DELAY);
-      return () => clearTimeout(timer);
-    }
-  }, [phase, winner, nextRound]);
-
   const handlePlayerBid = useCallback(
     (bid: number) => {
-      placeBid("south", bid);
+      placeBid(PLAYER_POSITIONS.SOUTH, bid);
     },
     [placeBid]
   );
@@ -123,7 +90,7 @@ export const GameTable = memo(function GameTable() {
   }, [startNewGame, difficulty]);
 
   const handleGetHint = useCallback(() => {
-    if (phase !== "playing" || round.currentPlayer !== "south") return;
+    if (phase !== "playing" || round.currentPlayer !== PLAYER_POSITIONS.SOUTH) return;
     
     const player = players.south;
     const isLeading = !round.currentTrick || round.currentTrick.cards.length === 0;
@@ -165,12 +132,12 @@ export const GameTable = memo(function GameTable() {
 
       {/* Partner (North) */}
       <div className="absolute top-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-        <PlayerArea position="north" />
+        <PlayerArea position={PLAYER_POSITIONS.NORTH} />
         <PlayerLabel
           name={players.north.name}
           bid={players.north.bid}
           tricks={players.north.tricksWon}
-          isCurrentPlayer={round.currentPlayer === "north" && phase === "playing"}
+          isCurrentPlayer={round.currentPlayer === PLAYER_POSITIONS.NORTH && phase === "playing"}
         />
       </div>
 
@@ -180,9 +147,9 @@ export const GameTable = memo(function GameTable() {
           name={players.west.name}
           bid={players.west.bid}
           tricks={players.west.tricksWon}
-          isCurrentPlayer={round.currentPlayer === "west" && phase === "playing"}
+          isCurrentPlayer={round.currentPlayer === PLAYER_POSITIONS.WEST && phase === "playing"}
         />
-        <PlayerArea position="west" />
+        <PlayerArea position={PLAYER_POSITIONS.WEST} />
       </div>
 
       {/* East Opponent */}
@@ -191,9 +158,9 @@ export const GameTable = memo(function GameTable() {
           name={players.east.name}
           bid={players.east.bid}
           tricks={players.east.tricksWon}
-          isCurrentPlayer={round.currentPlayer === "east" && phase === "playing"}
+          isCurrentPlayer={round.currentPlayer === PLAYER_POSITIONS.EAST && phase === "playing"}
         />
-        <PlayerArea position="east" />
+        <PlayerArea position={PLAYER_POSITIONS.EAST} />
       </div>
 
       {/* Center trick area */}
@@ -207,17 +174,17 @@ export const GameTable = memo(function GameTable() {
           name="You"
           bid={players.south.bid}
           tricks={players.south.tricksWon}
-          isCurrentPlayer={round.currentPlayer === "south" && phase === "playing"}
+          isCurrentPlayer={round.currentPlayer === PLAYER_POSITIONS.SOUTH && phase === "playing"}
           isHuman
         />
-        <PlayerArea position="south" />
+        <PlayerArea position={PLAYER_POSITIONS.SOUTH} />
       </div>
 
       {/* Hint display */}
       <HintDisplay showHint={showHint} hintCard={hintCard} />
 
       {/* Bidding UI */}
-      {phase === "bidding" && round.currentPlayer === "south" && (
+      {phase === "bidding" && round.currentPlayer === PLAYER_POSITIONS.SOUTH && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-40">
           <BidSelector
             onBid={handlePlayerBid}
@@ -228,7 +195,7 @@ export const GameTable = memo(function GameTable() {
       )}
 
       {/* Waiting for AI to bid */}
-      {phase === "bidding" && round.currentPlayer !== "south" && (
+      {phase === "bidding" && round.currentPlayer !== PLAYER_POSITIONS.SOUTH && (
         <WaitingForBidOverlay
           currentPlayer={round.currentPlayer}
           players={players}
@@ -236,7 +203,7 @@ export const GameTable = memo(function GameTable() {
       )}
 
       {/* AI thinking indicator */}
-      {phase === "playing" && round.currentPlayer !== "south" && (
+      {phase === "playing" && round.currentPlayer !== PLAYER_POSITIONS.SOUTH && (
         <AIThinkingOverlay
           currentPlayer={round.currentPlayer}
           players={players}

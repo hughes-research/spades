@@ -12,7 +12,7 @@
  */
 
 import { Card, SUITS, RANKS, PlayerPosition, PLAYER_ORDER, RANK_VALUES, Suit } from "./types";
-import { GAME_CONSTANTS } from "./constants";
+import { GAME_CONSTANTS, PLAYER_POSITIONS } from "./constants";
 
 /**
  * Creates a standard 52-card deck with all suits and ranks.
@@ -88,10 +88,10 @@ export function shuffle<T>(array: T[]): T[] {
 export function dealCards(): Record<PlayerPosition, Card[]> {
   const deck = shuffle(createDeck());
   const hands: Record<PlayerPosition, Card[]> = {
-    south: [],
-    west: [],
-    north: [],
-    east: [],
+    [PLAYER_POSITIONS.SOUTH]: [],
+    [PLAYER_POSITIONS.WEST]: [],
+    [PLAYER_POSITIONS.NORTH]: [],
+    [PLAYER_POSITIONS.EAST]: [],
   };
   
   // Deal cards one at a time, rotating through players

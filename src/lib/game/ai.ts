@@ -59,6 +59,64 @@ interface AIContext {
 }
 
 /**
+ * Context used for calculating AI bids.
+ */
+interface BidContext {
+  hand: Card[];
+  partnerBid: number | null;
+  spadeCount: number;
+  highCards: number;
+  suitCounts: Record<Suit, number>;
+}
+
+type BidStrategy = (baseBid: number, context: BidContext) => number;
+
+/**
+ * Strategies for calculating bids based on difficulty.
+ */
+const BID_STRATEGIES: Record<Difficulty, BidStrategy> = {
+  easy: (baseBid) => {
+    // Easy AI tends to overbid and be unpredictable
+    return baseBid + Math.floor(Math.random() * 3) - 1;
+  },
+  
+  medium: (baseBid, { partnerBid }) => {
+    let bid = Math.round(baseBid);
+    // Consider partner's bid
+    if (partnerBid !== null && partnerBid >= 0) {
+      const teamTotal = bid + partnerBid;
+      if (teamTotal > BID_CONSTANTS.MEDIUM_AI_TEAM_TOTAL_THRESHOLD) {
+        bid = Math.max(BID_CONSTANTS.MIN_BID, bid - 1);
+      }
+    }
+    return bid;
+  },
+  
+  hard: (baseBid, { partnerBid, spadeCount, highCards }) => {
+    let bid = Math.round(baseBid);
+    
+    // Adjust based on partner's bid for team balance
+    if (partnerBid !== null && partnerBid >= 0) {
+      const teamTotal = bid + partnerBid;
+      if (teamTotal > BID_CONSTANTS.HARD_AI_TEAM_TOTAL_HIGH) {
+        bid = Math.max(BID_CONSTANTS.MIN_BID, bid - 2);
+      } else if (teamTotal < BID_CONSTANTS.HARD_AI_TEAM_TOTAL_LOW) {
+        bid = Math.min(BID_CONSTANTS.HARD_AI_MAX_BID_ADJUSTMENT, bid + 1);
+      }
+    }
+    
+    // Consider nil if hand is very weak
+    if (baseBid <= 1 && spadeCount <= AI_CONSTANTS.NIL_MAX_SPADE_COUNT && highCards === 0) {
+      if (Math.random() < AI_CONSTANTS.HARD_AI_NIL_CHANCE) {
+        return BID_CONSTANTS.NIL_BID; // Nil bid
+      }
+    }
+    
+    return bid;
+  }
+};
+
+/**
  * Finds the lowest-ranked card in an array.
  * Used for playing safe or dumping bad cards.
  * 
@@ -180,51 +238,23 @@ export function calculateAIBid(
   const singletons = Object.values(suitCounts).filter((c) => c === 1).length;
   baseBid += voids * AI_CONSTANTS.VOID_SUIT_MULTIPLIER + singletons * AI_CONSTANTS.SINGLETON_SUIT_MULTIPLIER;
   
-  // Apply difficulty modifiers
-  let bid = baseBid;
+  // Execute strategy
+  const context: BidContext = {
+    hand,
+    partnerBid,
+    spadeCount,
+    highCards,
+    suitCounts
+  };
   
-  switch (difficulty) {
-    case "easy":
-      // Easy AI tends to overbid and be unpredictable
-      bid = baseBid + Math.floor(Math.random() * 3) - 1;
-      break;
-      
-    case "medium":
-      // Medium AI is more consistent
-      bid = Math.round(baseBid);
-      // Consider partner's bid
-      if (partnerBid !== null && partnerBid >= 0) {
-        const teamTotal = bid + partnerBid;
-        if (teamTotal > BID_CONSTANTS.MEDIUM_AI_TEAM_TOTAL_THRESHOLD) {
-          bid = Math.max(BID_CONSTANTS.MIN_BID, bid - 1);
-        }
-      }
-      break;
-      
-    case "hard":
-      // Hard AI uses advanced card counting and partnership coordination
-      bid = Math.round(baseBid);
-      
-      // Adjust based on partner's bid for team balance
-      if (partnerBid !== null && partnerBid >= 0) {
-        const teamTotal = bid + partnerBid;
-        if (teamTotal > BID_CONSTANTS.HARD_AI_TEAM_TOTAL_HIGH) {
-          bid = Math.max(BID_CONSTANTS.MIN_BID, bid - 2);
-        } else if (teamTotal < BID_CONSTANTS.HARD_AI_TEAM_TOTAL_LOW) {
-          bid = Math.min(BID_CONSTANTS.HARD_AI_MAX_BID_ADJUSTMENT, bid + 1);
-        }
-      }
-      
-      // Consider nil if hand is very weak
-      if (baseBid <= 1 && spadeCount <= AI_CONSTANTS.NIL_MAX_SPADE_COUNT && highCards === 0) {
-        if (Math.random() < AI_CONSTANTS.HARD_AI_NIL_CHANCE) {
-          return BID_CONSTANTS.NIL_BID; // Nil bid
-        }
-      }
-      break;
-  }
+  const strategy = BID_STRATEGIES[difficulty];
+  const bid = strategy(baseBid, context);
   
   // Clamp bid to valid range
+  // Note: Nil bid (0) is valid but handled inside hard strategy logic or specific override
+  // If strategy returns 0 (Nil) or -1 (Blind Nil), we return it directly.
+  if (bid <= 0) return bid;
+  
   return Math.max(BID_CONSTANTS.MIN_BID, Math.min(BID_CONSTANTS.MAX_BID, Math.round(bid)));
 }
 
@@ -692,4 +722,3 @@ export function getHintCard(
 }
 
 // Reuse getHighestInTrick for hint functionality (DRY principle)
-

@@ -24,6 +24,16 @@ export const GAME_CONSTANTS = {
 } as const;
 
 /**
+ * Player position constants.
+ */
+export const PLAYER_POSITIONS = {
+  SOUTH: "south",
+  WEST: "west",
+  NORTH: "north",
+  EAST: "east",
+} as const;
+
+/**
  * Animation and timing delays in milliseconds.
  */
 export const ANIMATION_DELAYS = {
@@ -102,4 +112,3 @@ export const CARD_CONSTANTS = {
   /** Minimum rank value for high spades */
   HIGH_SPADE_RANK_THRESHOLD: 12,
 } as const;
-

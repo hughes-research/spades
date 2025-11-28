@@ -10,6 +10,7 @@
  */
 
 import { Suit, Rank } from "@/components/svg";
+import { PLAYER_POSITIONS } from "./constants";
 
 // Re-export Suit and Rank for use in other game modules
 export type { Suit, Rank };
@@ -42,7 +43,7 @@ export interface Card {
  * - north: AI partner (top)
  * - east: AI opponent (right)
  */
-export type PlayerPosition = "south" | "west" | "north" | "east";
+export type PlayerPosition = typeof PLAYER_POSITIONS[keyof typeof PLAYER_POSITIONS];
 
 /**
  * Team designations.
@@ -259,7 +260,12 @@ export const RANKS: Rank[] = [
  * 
  * @constant
  */
-export const PLAYER_ORDER: PlayerPosition[] = ["south", "west", "north", "east"];
+export const PLAYER_ORDER: PlayerPosition[] = [
+  PLAYER_POSITIONS.SOUTH,
+  PLAYER_POSITIONS.WEST,
+  PLAYER_POSITIONS.NORTH,
+  PLAYER_POSITIONS.EAST,
+];
 
 /**
  * Maps each position to their team.
@@ -268,10 +274,10 @@ export const PLAYER_ORDER: PlayerPosition[] = ["south", "west", "north", "east"]
  * @constant
  */
 export const TEAM_ASSIGNMENTS: Record<PlayerPosition, Team> = {
-  south: "player",    // Human player
-  north: "player",    // AI partner
-  west: "opponent",   // AI opponent
-  east: "opponent",   // AI opponent
+  [PLAYER_POSITIONS.SOUTH]: "player",    // Human player
+  [PLAYER_POSITIONS.NORTH]: "player",    // AI partner
+  [PLAYER_POSITIONS.WEST]: "opponent",   // AI opponent
+  [PLAYER_POSITIONS.EAST]: "opponent",   // AI opponent
 };
 
 /**
@@ -301,10 +307,10 @@ export const getNextPlayer = (current: PlayerPosition): PlayerPosition => {
  */
 export const getPartner = (position: PlayerPosition): PlayerPosition => {
   const partners: Record<PlayerPosition, PlayerPosition> = {
-    south: "north",
-    north: "south",
-    east: "west",
-    west: "east",
+    [PLAYER_POSITIONS.SOUTH]: PLAYER_POSITIONS.NORTH,
+    [PLAYER_POSITIONS.NORTH]: PLAYER_POSITIONS.SOUTH,
+    [PLAYER_POSITIONS.EAST]: PLAYER_POSITIONS.WEST,
+    [PLAYER_POSITIONS.WEST]: PLAYER_POSITIONS.EAST,
   };
   return partners[position];
 };

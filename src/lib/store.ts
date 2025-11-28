@@ -34,7 +34,7 @@ import { dealCards } from "./game/deck";
 import { determineTrickWinner, getValidPlays, wouldBreakSpades } from "./game/rules";
 import { calculateRoundScore, updateTeamScore, checkWinner } from "./game/scoring";
 import { calculateAIBid, selectAICard, getAIThinkingDelay } from "./game/ai";
-import { ANIMATION_DELAYS, GAME_CONSTANTS } from "./game/constants";
+import { ANIMATION_DELAYS, GAME_CONSTANTS, PLAYER_POSITIONS } from "./game/constants";
 
 /**
  * Default team score state for new games.
@@ -54,8 +54,8 @@ const initialTeamScore: TeamScore = {
  * @returns {Record<PlayerPosition, Player>} Initial player states
  */
 const createInitialPlayers = (): Record<PlayerPosition, Player> => ({
-  south: {
-    position: "south",
+  [PLAYER_POSITIONS.SOUTH]: {
+    position: PLAYER_POSITIONS.SOUTH,
     name: "You",
     isHuman: true,
     team: "player",
@@ -63,8 +63,8 @@ const createInitialPlayers = (): Record<PlayerPosition, Player> => ({
     bid: null,
     tricksWon: 0,
   },
-  west: {
-    position: "west",
+  [PLAYER_POSITIONS.WEST]: {
+    position: PLAYER_POSITIONS.WEST,
     name: "West",
     isHuman: false,
     team: "opponent",
@@ -72,8 +72,8 @@ const createInitialPlayers = (): Record<PlayerPosition, Player> => ({
     bid: null,
     tricksWon: 0,
   },
-  north: {
-    position: "north",
+  [PLAYER_POSITIONS.NORTH]: {
+    position: PLAYER_POSITIONS.NORTH,
     name: "Partner",
     isHuman: false,
     team: "player",
@@ -81,8 +81,8 @@ const createInitialPlayers = (): Record<PlayerPosition, Player> => ({
     bid: null,
     tricksWon: 0,
   },
-  east: {
-    position: "east",
+  [PLAYER_POSITIONS.EAST]: {
+    position: PLAYER_POSITIONS.EAST,
     name: "East",
     isHuman: false,
     team: "opponent",
@@ -101,7 +101,7 @@ const createInitialState = (): GameState => ({
     roundNumber: 1,
     tricks: [],
     currentTrick: null,
-    currentPlayer: "west", // Left of dealer (south)
+    currentPlayer: PLAYER_POSITIONS.WEST, // Left of dealer (south)
     spadesBroken: false,
     bidsComplete: false,
   },
@@ -150,6 +150,9 @@ interface GameStore extends GameState {
   
   /** Gets valid plays for a player */
   getValidPlaysForPlayer: (position: PlayerPosition) => Card[];
+
+  /** Central game loop that triggers next actions based on state */
+  checkGameLoop: () => void;
   
   /** Resets to initial state */
   reset: () => void;
@@ -179,6 +182,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...state,
       ...loadedState,
     }));
+    // After loading, check if we need to resume logic
+    get().checkGameLoop();
   },
 
   dealHands: () => {
@@ -188,20 +193,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...state,
       phase: "bidding",
       players: {
-        south: { ...state.players.south, hand: hands.south, bid: null, tricksWon: 0 },
-        west: { ...state.players.west, hand: hands.west, bid: null, tricksWon: 0 },
-        north: { ...state.players.north, hand: hands.north, bid: null, tricksWon: 0 },
-        east: { ...state.players.east, hand: hands.east, bid: null, tricksWon: 0 },
+        [PLAYER_POSITIONS.SOUTH]: { ...state.players.south, hand: hands.south, bid: null, tricksWon: 0 },
+        [PLAYER_POSITIONS.WEST]: { ...state.players.west, hand: hands.west, bid: null, tricksWon: 0 },
+        [PLAYER_POSITIONS.NORTH]: { ...state.players.north, hand: hands.north, bid: null, tricksWon: 0 },
+        [PLAYER_POSITIONS.EAST]: { ...state.players.east, hand: hands.east, bid: null, tricksWon: 0 },
       },
       round: {
         ...state.round,
-        currentPlayer: "west", // Left of dealer starts
+        currentPlayer: PLAYER_POSITIONS.WEST, // Left of dealer starts
         bidsComplete: false,
         spadesBroken: false,
         tricks: [],
         currentTrick: null,
       },
     }));
+    
+    get().checkGameLoop();
   },
 
   placeBid: (position: PlayerPosition, bid: number) => {
@@ -223,11 +230,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
         phase: allBidsIn ? "playing" : "bidding",
         round: {
           ...state.round,
-          currentPlayer: allBidsIn ? "west" : nextPlayer,
+          currentPlayer: allBidsIn ? PLAYER_POSITIONS.WEST : nextPlayer,
           bidsComplete: allBidsIn,
         },
       };
     });
+    
+    get().checkGameLoop();
   },
 
   playCard: (position: PlayerPosition, card: Card) => {
@@ -275,6 +284,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       };
     });
+    
+    get().checkGameLoop();
   },
 
   processAITurn: async () => {
@@ -283,28 +294,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const initialCurrentPlayer = initialPlayers[initialRound.currentPlayer];
     
     // Early exit checks
-    if (initialCurrentPlayer.isHuman || initialState.isAnimating) return;
+    if (initialCurrentPlayer.isHuman) return;
     if (initialPhase !== "bidding" && initialPhase !== "playing") return;
     
-    // Add thinking delay
+    // Note: Thinking delay is now handled by checkGameLoop calling us inside a timeout/async flow
+    // But we still want to simulate "thinking" time here if it wasn't done externally
+    // For now, we assume the caller sets isAnimating=true and waits, OR we wait here.
+    // To keep logic clean, let's wait here.
+    
     const delay = getAIThinkingDelay(difficulty);
     await new Promise((resolve) => setTimeout(resolve, delay));
     
-    // Re-check state after delay - game state may have changed
+    // Re-check state after delay
     const state = get();
     const { phase, round, players, id: currentGameId } = state;
     
-    // Verify we're still in the same game (prevents stale updates after new game)
     if (currentGameId !== gameId) return;
-    
     const currentPlayer = players[round.currentPlayer];
-    
-    // Verify the turn is still valid after the delay
-    if (currentPlayer.isHuman || state.isAnimating) return;
+    if (currentPlayer.isHuman) return;
     if (phase !== "bidding" && phase !== "playing") return;
     
     if (phase === "bidding") {
-      // AI bidding - check hand exists
       if (currentPlayer.hand.length === 0) return;
       
       const partnerPos = getPartner(round.currentPlayer);
@@ -312,7 +322,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const bid = calculateAIBid(currentPlayer.hand, partnerBid, difficulty);
       get().placeBid(round.currentPlayer, bid);
     } else if (phase === "playing") {
-      // AI playing a card - check hand has cards
       if (currentPlayer.hand.length === 0) return;
       
       const partner = players[getPartner(round.currentPlayer)];
@@ -328,18 +337,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       
       const card = selectAICard(context);
       get().playCard(round.currentPlayer, card);
-      
-      // Check if trick is complete with validation
-      const newState = get();
-      if (newState.id === gameId && newState.round.currentTrick?.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK) {
-        setTimeout(() => {
-          // Validate state hasn't changed before finishing trick
-          const checkState = get();
-          if (checkState.id === gameId && checkState.round.currentTrick?.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK) {
-            get().finishTrick();
-          }
-        }, ANIMATION_DELAYS.TRICK_COMPLETE_DELAY);
-      }
     }
   },
 
@@ -348,75 +345,77 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const trick = state.round.currentTrick;
       if (!trick || trick.cards.length !== GAME_CONSTANTS.CARDS_PER_TRICK) return state;
       
-      const winner = determineTrickWinner(trick);
-      const completedTrick = { ...trick, winner };
+      const trickWinner = determineTrickWinner(trick);
+      const completedTrick = { ...trick, winner: trickWinner };
       
       // Update winner's trick count
       const newPlayers = { ...state.players };
-      newPlayers[winner] = {
-        ...newPlayers[winner],
-        tricksWon: newPlayers[winner].tricksWon + 1,
+      newPlayers[trickWinner] = {
+        ...newPlayers[trickWinner],
+        tricksWon: newPlayers[trickWinner].tricksWon + 1,
       };
       
       const newTricks = [...state.round.tricks, completedTrick];
       const roundComplete = newTricks.length === GAME_CONSTANTS.TRICKS_PER_ROUND;
       
+      // If round is complete, calculate scores immediately
+      let playerTeamScore = state.playerTeamScore;
+      let opponentTeamScore = state.opponentTeamScore;
+      let phase: import("./game/types").GamePhase = roundComplete ? "round_end" : "playing";
+      let gameWinner = state.winner;
+
+      if (roundComplete) {
+        // Calculate player team score (south + north)
+        const playerResult = calculateRoundScore(
+          newPlayers.south.bid ?? 0,
+          newPlayers.south.tricksWon,
+          newPlayers.north.bid ?? 0,
+          newPlayers.north.tricksWon,
+          playerTeamScore.bags
+        );
+        
+        // Calculate opponent team score (west + east)
+        const opponentResult = calculateRoundScore(
+          newPlayers.west.bid ?? 0,
+          newPlayers.west.tricksWon,
+          newPlayers.east.bid ?? 0,
+          newPlayers.east.tricksWon,
+          opponentTeamScore.bags
+        );
+        
+        playerTeamScore = updateTeamScore(playerTeamScore, playerResult);
+        opponentTeamScore = updateTeamScore(opponentTeamScore, opponentResult);
+        
+        // Check for winner
+        gameWinner = checkWinner(playerTeamScore.score, opponentTeamScore.score);
+        if (gameWinner) {
+          phase = "game_over";
+        }
+      }
+
       return {
         ...state,
         players: newPlayers,
-        phase: roundComplete ? "round_end" : "playing",
+        phase,
+        playerTeamScore,
+        opponentTeamScore,
+        winner: gameWinner,
         round: {
           ...state.round,
           tricks: newTricks,
           currentTrick: null,
-          currentPlayer: winner, // Winner leads next trick
+          currentPlayer: trickWinner, // Winner leads next trick
         },
       };
     });
     
-    // Check if round is over
-    const state = get();
-    if (state.phase === "round_end") {
-      setTimeout(() => get().finishRound(), ANIMATION_DELAYS.ROUND_END_DELAY);
-    }
+    get().checkGameLoop();
   },
 
   finishRound: () => {
-    set((state) => {
-      const { players, playerTeamScore, opponentTeamScore } = state;
-      
-      // Calculate player team score (south + north)
-      const playerResult = calculateRoundScore(
-        players.south.bid ?? 0,
-        players.south.tricksWon,
-        players.north.bid ?? 0,
-        players.north.tricksWon,
-        playerTeamScore.bags
-      );
-      
-      // Calculate opponent team score (west + east)
-      const opponentResult = calculateRoundScore(
-        players.west.bid ?? 0,
-        players.west.tricksWon,
-        players.east.bid ?? 0,
-        players.east.tricksWon,
-        opponentTeamScore.bags
-      );
-      
-      const newPlayerScore = updateTeamScore(playerTeamScore, playerResult);
-      const newOpponentScore = updateTeamScore(opponentTeamScore, opponentResult);
-      
-      // Check for winner
-      const winner = checkWinner(newPlayerScore.score, newOpponentScore.score);
-      
-      return {
-        ...state,
-        playerTeamScore: newPlayerScore,
-        opponentTeamScore: newOpponentScore,
-        phase: winner ? "game_over" : "round_end",
-        winner,
-      };
-    });
+    // Deprecated: logic moved to finishTrick for atomic updates
+    // Keeping for potential manual overrides or edge cases
+    get().checkGameLoop();
   },
 
   nextRound: () => {
@@ -434,6 +433,88 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
     
     setTimeout(() => get().dealHands(), ANIMATION_DELAYS.NEXT_ROUND_DELAY);
+  },
+
+  checkGameLoop: () => {
+    const state = get();
+    if (state.isAnimating) return;
+
+    // 1. Trick Complete -> Finish Trick
+    if (
+      state.phase === "playing" &&
+      state.round.currentTrick?.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK
+    ) {
+      set({ isAnimating: true });
+      setTimeout(() => {
+        get().finishTrick();
+        set({ isAnimating: false });
+        get().checkGameLoop(); // Re-check after finish
+      }, ANIMATION_DELAYS.TRICK_COMPLETE_DELAY);
+      return;
+    }
+
+    // 2. Round End -> Calculate Scores
+    // If we just entered round_end from finishTrick, scores might not be updated yet.
+    // However, finishRound is idempotent if called multiple times (it uses current state).
+    // But we only want to call it once per round end.
+    // We can rely on the fact that finishTrick sets phase to round_end.
+    // We need a way to know if scores are calculated.
+    // Actually, simply: finishTrick sets phase round_end.
+    // We want to immediately calculate scores? 
+    // If we do it here, there is a delay between last card and score show? 
+    // No, finishTrick happens. Then this runs.
+    // If we want the modal to show, we should probably run finishRound immediately if needed.
+    // But let's stick to the previous behavior: finishTrick -> Wait -> finishRound (or nextRound).
+    
+    // Let's look at the previous impl:
+    // finishTrick -> setTimeout(finishRound)
+    // finishRound updates scores.
+    // GameTable -> setTimeout(nextRound).
+    
+    if (state.phase === "round_end" && !state.winner) {
+        // We need to differentiate "just finished trick" vs "showing scores".
+        // Current Store impl doesn't have a sub-state.
+        // But checkGameLoop is called after finishTrick.
+        // If we are in round_end, and we haven't animated the transition to next round...
+        
+        // Let's assume finishTrick DOES NOT calculate scores yet.
+        // We will call finishRound here immediately to update scores so the Modal is correct?
+        // But we want a delay for the user to see the last trick winner.
+        // The last trick winner is shown during TRICK_COMPLETE_DELAY.
+        // After that, finishTrick() runs.
+        // So when we are here, the trick is cleared.
+        // So we should calculate scores NOW.
+        
+        // But if we calculate scores now, we need to know if we already did it to avoid loop?
+        // We can check if roundScore > 0? No, could be 0.
+        // Let's add a hack: We will execute finishRound logic inside finishTrick OR here.
+        // Actually, let's call finishRound inside finishTrick to be atomic.
+        // Then here we just handle the nextRound transition.
+    }
+
+    // 3. Round End -> Next Round
+    if (state.phase === "round_end" && !state.winner) {
+       set({ isAnimating: true });
+       setTimeout(() => {
+         get().nextRound();
+         set({ isAnimating: false });
+         // checkGameLoop called by nextRound->dealHands
+       }, ANIMATION_DELAYS.AUTO_CONTINUE_DELAY);
+       return;
+    }
+
+    // 4. AI Turn
+    const currentPlayer = state.players[state.round.currentPlayer];
+    if (
+      (state.phase === "bidding" || state.phase === "playing") &&
+      !currentPlayer.isHuman
+    ) {
+      set({ isAnimating: true });
+      get().processAITurn().finally(() => {
+        set({ isAnimating: false });
+        get().checkGameLoop();
+      });
+    }
   },
 
   setAnimating: (isAnimating: boolean) => {
@@ -461,4 +542,3 @@ export const useGameStore = create<GameStore>((set, get) => ({
 }));
 
 export default useGameStore;
-
