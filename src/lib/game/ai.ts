@@ -172,13 +172,13 @@ export function calculateAIBid(
   let baseBid = estimateMinTricks(hand);
   
   // Adjust based on spades
-  if (spadeCount >= 4) baseBid += 1;
-  if (spadeCount >= 6) baseBid += 1;
+  if (spadeCount >= AI_CONSTANTS.SPADE_COUNT_THRESHOLD_1) baseBid += 1;
+  if (spadeCount >= AI_CONSTANTS.SPADE_COUNT_THRESHOLD_2) baseBid += 1;
   
   // Adjust based on suit distribution
   const voids = Object.values(suitCounts).filter((c) => c === 0).length;
   const singletons = Object.values(suitCounts).filter((c) => c === 1).length;
-  baseBid += voids * 0.5 + singletons * 0.3;
+  baseBid += voids * AI_CONSTANTS.VOID_SUIT_MULTIPLIER + singletons * AI_CONSTANTS.SINGLETON_SUIT_MULTIPLIER;
   
   // Apply difficulty modifiers
   let bid = baseBid;

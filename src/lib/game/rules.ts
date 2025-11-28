@@ -18,7 +18,7 @@ import {
   RANK_VALUES,
 } from "./types";
 import { getCardsOfSuit } from "./deck";
-import { GAME_CONSTANTS } from "./constants";
+import { GAME_CONSTANTS, AI_CONSTANTS, CARD_CONSTANTS } from "./constants";
 
 /**
  * Determines which player wins a completed trick.
@@ -187,13 +187,13 @@ export function estimateMinTricks(hand: Card[]): number {
   
   tricks += hand.filter(
     (c) => c.rank === "K" && suitCounts[c.suit] >= 2
-  ).length * 0.7; // Using inline value for protected king multiplier
+  ).length * AI_CONSTANTS.PROTECTED_KING_MULTIPLIER;
   
   // High spades are especially valuable
   const highSpades = hand.filter(
-    (c) => c.suit === "spades" && RANK_VALUES[c.rank] >= 12 // Using inline value for card rank threshold
+    (c) => c.suit === "spades" && RANK_VALUES[c.rank] >= CARD_CONSTANTS.HIGH_SPADE_RANK_THRESHOLD
   ).length;
-  tricks += highSpades * 0.3; // Using inline value for high spade multiplier
+  tricks += highSpades * AI_CONSTANTS.HIGH_SPADE_MULTIPLIER;
   
   return Math.floor(tricks);
 }

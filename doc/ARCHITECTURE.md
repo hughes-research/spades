@@ -31,9 +31,9 @@ graph TB
     
     subgraph Server["Server Layer"]
         subgraph API["API Routes"]
-            GameAPI[/game]
-            SettingsAPI[/settings]
-            StatsAPI[/stats]
+            GameAPI["/game"]
+            SettingsAPI["/settings"]
+            StatsAPI["/stats"]
         end
         
         Prisma[Prisma ORM]
