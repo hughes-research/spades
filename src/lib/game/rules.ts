@@ -18,6 +18,7 @@ import {
   RANK_VALUES,
 } from "./types";
 import { getCardsOfSuit } from "./deck";
+import { GAME_CONSTANTS } from "./constants";
 
 /**
  * Determines which player wins a completed trick.
@@ -43,8 +44,8 @@ import { getCardsOfSuit } from "./deck";
  * // Returns "west" (spade beats ace of hearts)
  */
 export function determineTrickWinner(trick: Trick): PlayerPosition {
-  if (trick.cards.length !== 4) {
-    throw new Error("Trick must have exactly 4 cards");
+  if (trick.cards.length !== GAME_CONSTANTS.CARDS_PER_TRICK) {
+    throw new Error(`Trick must have exactly ${GAME_CONSTANTS.CARDS_PER_TRICK} cards`);
   }
 
   const leadSuit = trick.leadSuit;
@@ -186,13 +187,13 @@ export function estimateMinTricks(hand: Card[]): number {
   
   tricks += hand.filter(
     (c) => c.rank === "K" && suitCounts[c.suit] >= 2
-  ).length * 0.7;
+  ).length * 0.7; // Using inline value for protected king multiplier
   
   // High spades are especially valuable
   const highSpades = hand.filter(
-    (c) => c.suit === "spades" && RANK_VALUES[c.rank] >= 12
+    (c) => c.suit === "spades" && RANK_VALUES[c.rank] >= 12 // Using inline value for card rank threshold
   ).length;
-  tricks += highSpades * 0.3;
+  tricks += highSpades * 0.3; // Using inline value for high spade multiplier
   
   return Math.floor(tricks);
 }

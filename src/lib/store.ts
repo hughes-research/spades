@@ -34,6 +34,7 @@ import { dealCards } from "./game/deck";
 import { determineTrickWinner, getValidPlays, wouldBreakSpades } from "./game/rules";
 import { calculateRoundScore, updateTeamScore, checkWinner } from "./game/scoring";
 import { calculateAIBid, selectAICard, getAIThinkingDelay } from "./game/ai";
+import { ANIMATION_DELAYS, GAME_CONSTANTS } from "./game/constants";
 
 /**
  * Default team score state for new games.
@@ -170,7 +171,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Deal cards after a short delay for animation
     setTimeout(() => {
       get().dealHands();
-    }, 100);
+    }, ANIMATION_DELAYS.DEAL_DELAY);
   },
 
   loadGame: (loadedState: Partial<GameState>) => {
@@ -211,7 +212,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Check if all bids are complete
       const allBidsIn = PLAYER_ORDER.every(
         (pos) => newPlayers[pos].bid !== null
-      );
+      ) && PLAYER_ORDER.length === GAME_CONSTANTS.PLAYER_COUNT;
       
       // Move to next player or start playing
       const nextPlayer = getNextPlayer(position);
@@ -258,7 +259,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         wouldBreakSpades(card, state.round.currentTrick, state.round.spadesBroken);
       
       // Check if trick is complete
-      const trickComplete = currentTrick.cards.length === 4;
+      const trickComplete = currentTrick.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK;
       
       return {
         ...state,
@@ -330,14 +331,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       
       // Check if trick is complete with validation
       const newState = get();
-      if (newState.id === gameId && newState.round.currentTrick?.cards.length === 4) {
+      if (newState.id === gameId && newState.round.currentTrick?.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK) {
         setTimeout(() => {
           // Validate state hasn't changed before finishing trick
           const checkState = get();
-          if (checkState.id === gameId && checkState.round.currentTrick?.cards.length === 4) {
+          if (checkState.id === gameId && checkState.round.currentTrick?.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK) {
             get().finishTrick();
           }
-        }, 1000);
+        }, ANIMATION_DELAYS.TRICK_COMPLETE_DELAY);
       }
     }
   },
@@ -345,7 +346,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   finishTrick: () => {
     set((state) => {
       const trick = state.round.currentTrick;
-      if (!trick || trick.cards.length !== 4) return state;
+      if (!trick || trick.cards.length !== GAME_CONSTANTS.CARDS_PER_TRICK) return state;
       
       const winner = determineTrickWinner(trick);
       const completedTrick = { ...trick, winner };
@@ -358,7 +359,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
       
       const newTricks = [...state.round.tricks, completedTrick];
-      const roundComplete = newTricks.length === 13;
+      const roundComplete = newTricks.length === GAME_CONSTANTS.TRICKS_PER_ROUND;
       
       return {
         ...state,
@@ -376,7 +377,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Check if round is over
     const state = get();
     if (state.phase === "round_end") {
-      setTimeout(() => get().finishRound(), 1500);
+      setTimeout(() => get().finishRound(), ANIMATION_DELAYS.ROUND_END_DELAY);
     }
   },
 
@@ -432,7 +433,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       },
     }));
     
-    setTimeout(() => get().dealHands(), 500);
+    setTimeout(() => get().dealHands(), ANIMATION_DELAYS.NEXT_ROUND_DELAY);
   },
 
   setAnimating: (isAnimating: boolean) => {

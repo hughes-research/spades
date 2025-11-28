@@ -6,6 +6,7 @@ import Link from "next/link";
 import { PageLayout, Section, Button } from "@/components/ui";
 import { SuitIcon } from "@/components/svg";
 import { FONTS } from "@/lib/styles";
+import { logger } from "@/lib/logger";
 
 interface GameRecord {
   id: string;
@@ -118,7 +119,7 @@ export default function HistoryPage() {
         if (gamesRes.ok) setGames(await gamesRes.json());
         if (statsRes.ok) setStats(await statsRes.json());
       } catch (err) {
-        console.error("History fetch error:", err);
+        logger.error("History fetch error", { error: String(err) });
         setError("Failed to load game history");
       } finally {
         setLoading(false);

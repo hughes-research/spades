@@ -6,31 +6,20 @@ The Spades application implements multiple layers of security to protect against
 
 ## Security Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                       Security Layers                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌────────────────────┐    ┌────────────────────┐              │
-│  │   Next.js          │    │   Rate Limiting    │              │
-│  │   Middleware       │    │   (In-Memory)      │              │
-│  │   (Security        │    │                    │              │
-│  │    Headers)        │    │   60 req/min       │              │
-│  └────────┬───────────┘    └────────┬───────────┘              │
-│           │                         │                           │
-│           ▼                         ▼                           │
-│  ┌─────────────────────────────────────────────────┐           │
-│  │              Input Validation                    │           │
-│  │   (Type Guards, Sanitization, Size Limits)      │           │
-│  └─────────────────────────────────────────────────┘           │
-│                          │                                      │
-│                          ▼                                      │
-│  ┌─────────────────────────────────────────────────┐           │
-│  │              Logging & Monitoring                │           │
-│  │   (Structured Logs, Sensitive Data Masking)     │           │
-│  └─────────────────────────────────────────────────┘           │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Security["Security Layers"]
+        Middleware[Next.js Middleware<br/>Security Headers]
+        RateLimit[Rate Limiting<br/>In-Memory<br/>60 req/min]
+        
+        Validation[Input Validation<br/>Type Guards, Sanitization<br/>Size Limits]
+        
+        Logging[Logging & Monitoring<br/>Structured Logs<br/>Sensitive Data Masking]
+        
+        Middleware --> Validation
+        RateLimit --> Validation
+        Validation --> Logging
+    end
 ```
 
 ---

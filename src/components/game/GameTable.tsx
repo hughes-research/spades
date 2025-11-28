@@ -1,11 +1,11 @@
 "use client";
 
 import { memo, useEffect, useCallback, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { useGameStore } from "@/lib/store";
 import { Card as CardType, PlayerPosition } from "@/lib/game/types";
 import { getValidPlays } from "@/lib/game/rules";
 import { getHintCard } from "@/lib/game/ai";
+import { ANIMATION_DELAYS, GAME_CONSTANTS } from "@/lib/game/constants";
 import { Hand } from "./Hand";
 import { TrickArea } from "./TrickArea";
 import { BidSelector } from "./BidSelector";
@@ -45,10 +45,10 @@ const PlayerArea = memo(function PlayerArea({ position }: { position: PlayerPosi
       
       setTimeout(() => {
         const state = useGameStore.getState();
-        if (state.round.currentTrick?.cards.length === 4) {
-          setTimeout(() => finishTrick(), 1000);
+        if (state.round.currentTrick?.cards.length === GAME_CONSTANTS.CARDS_PER_TRICK) {
+          setTimeout(() => finishTrick(), ANIMATION_DELAYS.TRICK_COMPLETE_DELAY);
         }
-      }, 100);
+      }, ANIMATION_DELAYS.DEAL_DELAY);
     },
     [phase, currentPlayer, position, playCard, finishTrick]
   );
@@ -96,7 +96,7 @@ export const GameTable = memo(function GameTable() {
     if (!currentPlayer.isHuman && (phase === "bidding" || phase === "playing")) {
       const timer = setTimeout(() => {
         processAITurn();
-      }, 500);
+      }, ANIMATION_DELAYS.AI_TURN_DELAY);
       return () => clearTimeout(timer);
     }
   }, [phase, round.currentPlayer, players, processAITurn]);
@@ -106,7 +106,7 @@ export const GameTable = memo(function GameTable() {
     if (phase === "round_end" && !winner) {
       const timer = setTimeout(() => {
         nextRound();
-      }, 3000);
+      }, ANIMATION_DELAYS.AUTO_CONTINUE_DELAY);
       return () => clearTimeout(timer);
     }
   }, [phase, winner, nextRound]);
@@ -144,7 +144,7 @@ export const GameTable = memo(function GameTable() {
     setTimeout(() => {
       setShowHint(false);
       setHintCard(null);
-    }, 3000);
+    }, ANIMATION_DELAYS.HINT_DISPLAY_DELAY);
   }, [phase, round, players]);
 
   return (

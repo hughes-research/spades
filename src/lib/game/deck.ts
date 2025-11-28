@@ -12,6 +12,7 @@
  */
 
 import { Card, SUITS, RANKS, PlayerPosition, PLAYER_ORDER, RANK_VALUES, Suit } from "./types";
+import { GAME_CONSTANTS } from "./constants";
 
 /**
  * Creates a standard 52-card deck with all suits and ranks.
@@ -94,8 +95,8 @@ export function dealCards(): Record<PlayerPosition, Card[]> {
   };
   
   // Deal cards one at a time, rotating through players
-  for (let i = 0; i < 52; i++) {
-    const playerIndex = i % 4;
+  for (let i = 0; i < GAME_CONSTANTS.DECK_SIZE; i++) {
+    const playerIndex = i % GAME_CONSTANTS.PLAYER_COUNT;
     const player = PLAYER_ORDER[playerIndex];
     hands[player].push(deck[i]);
   }

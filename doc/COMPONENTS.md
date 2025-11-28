@@ -6,37 +6,43 @@ The Spades application uses a modular component architecture built with React 19
 
 ## Component Organization
 
-```
-src/components/
-├── game/              # Game-specific components
-│   ├── index.ts       # Barrel exports
-│   ├── BidSelector.tsx
-│   ├── Card.tsx
-│   ├── CardFace.tsx
-│   ├── GameOverModal.tsx
-│   ├── GameStatusOverlay.tsx
-│   ├── GameTable.tsx
-│   ├── Hand.tsx
-│   ├── PlayerLabel.tsx
-│   ├── RoundEndModal.tsx
-│   ├── Scoreboard.tsx
-│   ├── ScoreDisplay.tsx
-│   ├── TopBar.tsx
-│   └── TrickArea.tsx
-├── svg/               # SVG-based graphics
-│   ├── index.ts
-│   ├── CardSVG.tsx
-│   ├── Logo.tsx
-│   └── SuitIcon.tsx
-├── three/             # 3D rendering (Three.js)
-│   ├── index.ts
-│   ├── Card3D.tsx
-│   ├── CardCanvas.tsx
-│   └── TextureGenerator.ts
-└── ui/                # Reusable UI primitives
-    ├── index.ts
-    ├── Breadcrumbs.tsx
-    └── Button.tsx
+```mermaid
+graph TD
+    Components[src/components/]
+    
+    Components --> Game[game/]
+    Components --> SVG[svg/]
+    Components --> Three[three/]
+    Components --> UI[ui/]
+    
+    Game --> GameIndex[index.ts]
+    Game --> GameBidSelector[BidSelector.tsx]
+    Game --> GameCard[Card.tsx]
+    Game --> GameCardFace[CardFace.tsx]
+    Game --> GameGameOverModal[GameOverModal.tsx]
+    Game --> GameGameStatusOverlay[GameStatusOverlay.tsx]
+    Game --> GameGameTable[GameTable.tsx]
+    Game --> GameHand[Hand.tsx]
+    Game --> GamePlayerLabel[PlayerLabel.tsx]
+    Game --> GameRoundEndModal[RoundEndModal.tsx]
+    Game --> GameScoreboard[Scoreboard.tsx]
+    Game --> GameScoreDisplay[ScoreDisplay.tsx]
+    Game --> GameTopBar[TopBar.tsx]
+    Game --> GameTrickArea[TrickArea.tsx]
+    
+    SVG --> SVGIndex[index.ts]
+    SVG --> SVGCardSVG[CardSVG.tsx]
+    SVG --> SVGLogo[Logo.tsx]
+    SVG --> SVGSuitIcon[SuitIcon.tsx]
+    
+    Three --> ThreeIndex[index.ts]
+    Three --> ThreeCard3D[Card3D.tsx]
+    Three --> ThreeCardCanvas[CardCanvas.tsx]
+    Three --> ThreeTextureGenerator[TextureGenerator.ts]
+    
+    UI --> UIIndex[index.ts]
+    UI --> UIBreadcrumbs[Breadcrumbs.tsx]
+    UI --> UIButton[Button.tsx]
 ```
 
 ---

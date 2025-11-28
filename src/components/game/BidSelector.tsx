@@ -4,6 +4,7 @@ import { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getHintBid } from "@/lib/game/ai";
 import { Card } from "@/lib/game/types";
+import { ANIMATION_DELAYS, BID_CONSTANTS } from "@/lib/game/constants";
 
 interface BidSelectorProps {
   onBid: (bid: number) => void;
@@ -44,23 +45,23 @@ export const BidSelector = memo(function BidSelector({
     if (playerHand.length === 0) return;
     const hint = getHintBid(playerHand, partnerBid);
     setHintBid(hint);
-    // Clear hint after 5 seconds
-    setTimeout(() => setHintBid(null), 5000);
+    // Clear hint after delay
+    setTimeout(() => setHintBid(null), ANIMATION_DELAYS.HINT_BID_DISPLAY_DELAY);
   };
 
   const getBidLabel = (bid: number): string => {
-    if (bid === -1) return "Blind Nil";
-    if (bid === 0) return "Nil";
+    if (bid === BID_CONSTANTS.BLIND_NIL_BID) return "Blind Nil";
+    if (bid === BID_CONSTANTS.NIL_BID) return "Nil";
     return String(bid);
   };
 
   const getBidDescription = (bid: number): string => {
-    if (bid === -1) return "Bid 0 tricks without seeing your cards (+200/-200)";
-    if (bid === 0) return "Bid 0 tricks (+100/-100)";
+    if (bid === BID_CONSTANTS.BLIND_NIL_BID) return "Bid 0 tricks without seeing your cards (+200/-200)";
+    if (bid === BID_CONSTANTS.NIL_BID) return "Bid 0 tricks (+100/-100)";
     return `Bid to win ${bid} trick${bid === 1 ? "" : "s"}`;
   };
 
-  // Calculate if combined bid would be over 13
+  // Calculate if combined bid would be over max
   const getTeamTotal = (bid: number): number => {
     if (partnerBid === null || partnerBid < 0) return bid;
     return partnerBid + Math.max(0, bid);
@@ -109,12 +110,12 @@ export const BidSelector = memo(function BidSelector({
                   className="font-mono"
                   style={{ 
                     fontFamily: "var(--font-fira-code)",
-                    color: getTeamTotal(selectedBid) > 13 ? "#ef4444" : "#ffd700"
+                    color: getTeamTotal(selectedBid) > BID_CONSTANTS.MAX_BID ? "#ef4444" : "#ffd700"
                   }}
                 >
                   {getTeamTotal(selectedBid)}
                 </span>
-                {getTeamTotal(selectedBid) > 13 && (
+                {getTeamTotal(selectedBid) > BID_CONSTANTS.MAX_BID && (
                   <span style={{ color: "#ef4444" }} className="ml-2">(risky!)</span>
                 )}
               </p>
@@ -147,14 +148,14 @@ export const BidSelector = memo(function BidSelector({
               className={`
                 px-4 py-2 rounded-lg border text-sm font-medium
                 ${
-                  selectedBid === -1
+                  selectedBid === BID_CONSTANTS.BLIND_NIL_BID
                     ? "bg-gold text-midnight border-gold"
                     : "border-gold/50 text-gold hover:bg-gold/10"
                 }
               `}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => handleBidClick(-1)}
+              onClick={() => handleBidClick(BID_CONSTANTS.BLIND_NIL_BID)}
               disabled={disabled}
             >
               Blind Nil
@@ -163,14 +164,14 @@ export const BidSelector = memo(function BidSelector({
               className={`
                 px-4 py-2 rounded-lg border text-sm font-medium
                 ${
-                  selectedBid === 0
+                  selectedBid === BID_CONSTANTS.NIL_BID
                     ? "bg-gold text-midnight border-gold"
                     : "border-gold/50 text-gold hover:bg-gold/10"
                 }
               `}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => handleBidClick(0)}
+              onClick={() => handleBidClick(BID_CONSTANTS.NIL_BID)}
               disabled={disabled}
             >
               Nil

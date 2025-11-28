@@ -250,12 +250,6 @@ const FaceCardCenter = memo(function FaceCardCenter({
   suit: Suit;
   color: string;
 }) {
-  const labels: Record<string, string> = {
-    J: "JACK",
-    Q: "QUEEN", 
-    K: "KING",
-  };
-  
   return (
     <g>
       {/* Decorative frame */}

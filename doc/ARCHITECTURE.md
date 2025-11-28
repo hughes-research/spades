@@ -6,50 +6,50 @@ The Spades card game is a modern, full-stack web application built with Next.js 
 
 ## System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Client Layer                             │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │                     React Components                        ││
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          ││
-│  │  │GameTable│ │  Hand   │ │  Card   │ │  SVG    │          ││
-│  │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘          ││
-│  └───────┼───────────┼───────────┼───────────┼────────────────┘│
-│          │           │           │           │                  │
-│  ┌───────┴───────────┴───────────┴───────────┴────────────────┐│
-│  │                    Zustand Store                            ││
-│  │           (Global State Management)                         ││
-│  └─────────────────────────┬──────────────────────────────────┘│
-│                            │                                    │
-│  ┌─────────────────────────┴──────────────────────────────────┐│
-│  │                    Game Engine                              ││
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          ││
-│  │  │  Rules  │ │   AI    │ │ Scoring │ │  Deck   │          ││
-│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘          ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                         Server Layer                             │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │                    API Routes                               ││
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐                       ││
-│  │  │  /game  │ │/settings│ │ /stats  │                       ││
-│  │  └────┬────┘ └────┬────┘ └────┬────┘                       ││
-│  └───────┼───────────┼───────────┼────────────────────────────┘│
-│          │           │           │                              │
-│  ┌───────┴───────────┴───────────┴────────────────────────────┐│
-│  │                    Prisma ORM                               ││
-│  └─────────────────────────┬──────────────────────────────────┘│
-│                            │                                    │
-│  ┌─────────────────────────┴──────────────────────────────────┐│
-│  │                    SQLite Database                          ││
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          ││
-│  │  │  Game   │ │  Round  │ │Settings │ │  Stats  │          ││
-│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘          ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        subgraph React["React Components"]
+            GameTable[GameTable]
+            Hand[Hand]
+            Card[Card]
+            SVG[SVG Components]
+        end
+        
+        Zustand[Zustand Store<br/>Global State Management]
+        
+        subgraph Engine["Game Engine"]
+            Rules[Rules]
+            AI[AI]
+            Scoring[Scoring]
+            Deck[Deck]
+        end
+        
+        React --> Zustand
+        Zustand --> Engine
+    end
+    
+    subgraph Server["Server Layer"]
+        subgraph API["API Routes"]
+            GameAPI[/game]
+            SettingsAPI[/settings]
+            StatsAPI[/stats]
+        end
+        
+        Prisma[Prisma ORM]
+        
+        subgraph DB["SQLite Database"]
+            GameModel[Game]
+            RoundModel[Round]
+            SettingsModel[Settings]
+            StatsModel[Stats]
+        end
+        
+        API --> Prisma
+        Prisma --> DB
+    end
+    
+    Client -->|HTTP| Server
 ```
 
 ## Core Components
@@ -78,21 +78,26 @@ Uses Zustand for lightweight, performant global state management:
 
 Component hierarchy:
 
-```
-components/
-├── game/           # Game-specific components
-│   ├── GameTable   # Main game orchestrator
-│   ├── Hand        # Card hand rendering
-│   ├── Card        # Individual card with animations
-│   ├── TrickArea   # Central trick display
-│   └── BidSelector # Bidding interface
-├── svg/            # SVG-based graphics
-│   ├── CardSVG     # Full card rendering
-│   ├── SuitIcon    # Suit symbols
-│   └── Logo        # Game branding
-└── ui/             # Reusable UI components
-    ├── Button      # Styled buttons
-    └── Breadcrumbs # Navigation breadcrumbs
+```mermaid
+graph TD
+    Components[components/]
+    
+    Components --> Game[game/]
+    Components --> SVG[svg/]
+    Components --> UI[ui/]
+    
+    Game --> GameTable[GameTable<br/>Main game orchestrator]
+    Game --> Hand[Hand<br/>Card hand rendering]
+    Game --> Card[Card<br/>Individual card with animations]
+    Game --> TrickArea[TrickArea<br/>Central trick display]
+    Game --> BidSelector[BidSelector<br/>Bidding interface]
+    
+    SVG --> CardSVG[CardSVG<br/>Full card rendering]
+    SVG --> SuitIcon[SuitIcon<br/>Suit symbols]
+    SVG --> Logo[Logo<br/>Game branding]
+    
+    UI --> Button[Button<br/>Styled buttons]
+    UI --> Breadcrumbs[Breadcrumbs<br/>Navigation breadcrumbs]
 ```
 
 ### 4. API Layer (`src/app/api/`)
@@ -115,53 +120,33 @@ RESTful API endpoints:
 
 ### Game Initialization
 
-```
-User clicks "New Game"
-       │
-       ▼
-startNewGame(difficulty)
-       │
-       ▼
-Create initial state
-       │
-       ▼
-dealCards() → Fisher-Yates shuffle
-       │
-       ▼
-Phase: "bidding"
-       │
-       ▼
-AI/Player bidding sequence
-       │
-       ▼
-Phase: "playing"
+```mermaid
+flowchart TD
+    Start[User clicks "New Game"] --> StartGame[startNewGame difficulty]
+    StartGame --> CreateState[Create initial state]
+    CreateState --> Deal[dealCards<br/>Fisher-Yates shuffle]
+    Deal --> PhaseBidding[Phase: "bidding"]
+    PhaseBidding --> Bidding[AI/Player bidding sequence]
+    Bidding --> PhasePlaying[Phase: "playing"]
 ```
 
 ### Card Play Flow
 
-```
-Player/AI selects card
-       │
-       ▼
-getValidPlays() check
-       │
-       ▼
-playCard(position, card)
-       │
-       ▼
-Update trick state
-       │
-       ▼
-Check spades broken
-       │
-       ▼
-Trick complete? → determineTrickWinner()
-       │
-       ▼
-Round complete? → calculateRoundScore()
-       │
-       ▼
-Game over? → checkWinner()
+```mermaid
+flowchart TD
+    Select[Player/AI selects card] --> Validate[getValidPlays check]
+    Validate --> Play[playCard position, card]
+    Play --> Update[Update trick state]
+    Update --> CheckSpades[Check spades broken]
+    CheckSpades --> TrickComplete{Trick complete?}
+    TrickComplete -->|Yes| DetermineWinner[determineTrickWinner]
+    TrickComplete -->|No| NextPlayer[Next player]
+    DetermineWinner --> RoundComplete{Round complete?}
+    RoundComplete -->|Yes| CalculateScore[calculateRoundScore]
+    RoundComplete -->|No| NextTrick[Next trick]
+    CalculateScore --> GameOver{Game over?}
+    GameOver -->|Yes| CheckWinner[checkWinner]
+    GameOver -->|No| NextRound[Next round]
 ```
 
 ## Technology Stack
@@ -202,30 +187,35 @@ Game over? → checkWinner()
 
 ## File Organization
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   ├── game/              # Game page
-│   ├── settings/          # Settings page
-│   ├── tutorial/          # Tutorial page
-│   ├── history/           # Game history page
-│   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── game/             # Game components
-│   ├── svg/              # SVG components
-│   ├── three/            # 3D components
-│   └── ui/               # UI primitives
-├── hooks/                 # Custom React hooks
-└── lib/                   # Core libraries
-    ├── game/             # Game engine
-    ├── store.ts          # Zustand store
-    ├── db.ts             # Prisma client
-    ├── logger.ts         # Logging utility
-    ├── rateLimit.ts      # Rate limiting
-    └── validation.ts     # Input validation
+```mermaid
+graph TD
+    Src[src/]
+    
+    Src --> App[app/]
+    Src --> Components[components/]
+    Src --> Hooks[hooks/]
+    Src --> Lib[lib/]
+    
+    App --> AppAPI[api/]
+    App --> AppGame[game/]
+    App --> AppSettings[settings/]
+    App --> AppTutorial[tutorial/]
+    App --> AppHistory[history/]
+    App --> AppGlobals[globals.css]
+    App --> AppLayout[layout.tsx]
+    App --> AppPage[page.tsx]
+    
+    Components --> CompGame[game/]
+    Components --> CompSVG[svg/]
+    Components --> CompThree[three/]
+    Components --> CompUI[ui/]
+    
+    Lib --> LibGame[game/]
+    Lib --> LibStore[store.ts]
+    Lib --> LibDB[db.ts]
+    Lib --> LibLogger[logger.ts]
+    Lib --> LibRateLimit[rateLimit.ts]
+    Lib --> LibValidation[validation.ts]
 ```
 
 ## Extensibility

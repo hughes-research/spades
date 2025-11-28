@@ -1,9 +1,0 @@
----
-description: Error: Failed to generate frontmatter for card-visualization-spec
----
-
-# card-visualization-spec
-
-Error: Failed to generate specification for this section.
-
-Technical specification of the card rendering system, including pip positioning algorithms, face card layouts, and suit-specific styling implementation details

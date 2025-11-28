@@ -6,14 +6,16 @@ The game engine (`src/lib/game/`) implements the complete Spades card game rules
 
 ## Module Structure
 
-```
-src/lib/game/
-├── index.ts        # Module exports
-├── types.ts        # Type definitions and constants
-├── deck.ts         # Deck management
-├── rules.ts        # Game rule enforcement
-├── scoring.ts      # Score calculations
-└── ai.ts           # AI opponent logic
+```mermaid
+graph TD
+    Game[src/lib/game/]
+    
+    Game --> Index[index.ts<br/>Module exports]
+    Game --> Types[types.ts<br/>Type definitions and constants]
+    Game --> Deck[deck.ts<br/>Deck management]
+    Game --> Rules[rules.ts<br/>Game rule enforcement]
+    Game --> Scoring[scoring.ts<br/>Score calculations]
+    Game --> AI[ai.ts<br/>AI opponent logic]
 ```
 
 ---

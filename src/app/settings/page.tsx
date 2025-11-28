@@ -10,6 +10,7 @@ import {
   Button,
 } from "@/components/ui";
 import { FONTS } from "@/lib/styles";
+import { logger } from "@/lib/logger";
 
 interface Settings {
   difficulty: "easy" | "medium" | "hard";
@@ -50,7 +51,7 @@ export default function SettingsPage() {
           setError("Failed to load settings. Using defaults.");
         }
       } catch (err) {
-        console.error("Settings fetch error:", err);
+        logger.error("Settings fetch error", { error: String(err) });
         setError("Network error. Using defaults.");
       } finally {
         setLoading(false);
@@ -70,9 +71,9 @@ export default function SettingsPage() {
       });
       if (!res.ok) throw new Error("Failed to save");
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      setTimeout(() => setSaved(false), 2000); // Using inline value for UI feedback timing
     } catch (err) {
-      console.error("Settings save error:", err);
+      logger.error("Settings save error", { error: String(err) });
       setError("Failed to save settings. Please try again.");
     } finally {
       setSaving(false);

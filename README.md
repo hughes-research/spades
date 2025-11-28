@@ -18,10 +18,19 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License" />
+  <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version" />
+  <img src="https://img.shields.io/badge/Node.js-20%2B-brightgreen.svg" alt="Node.js" />
+  <img src="https://img.shields.io/badge/status-active-success.svg" alt="Status" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Next.js-16.0-black?logo=next.js" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19.2-61DAFB?logo=react" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/Prisma-6.8-2D3748?logo=prisma" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Zustand-5.0-FF6B6B" alt="Zustand" />
 </p>
 
 ---
@@ -37,6 +46,20 @@ Spades is a fully-featured implementation of the classic trick-taking card game,
 - **Modern UI/UX**: Responsive design with smooth animations and intuitive controls
 - **Persistent Progress**: Game history, statistics, and settings saved automatically
 - **Production Ready**: Security headers, rate limiting, input validation, and structured logging
+
+## Screenshots
+
+<p align="center">
+  <img src="doc/intro-screen.png" alt="Main Menu" width="600" />
+  <br />
+  <em>Main menu with elegant dark green and gold theme</em>
+</p>
+
+<p align="center">
+  <img src="doc/main-screen.png" alt="Gameplay" width="600" />
+  <br />
+  <em>In-game view showing card play and scoring</em>
+</p>
 
 ---
 
@@ -165,34 +188,43 @@ Comprehensive documentation is available in the `/doc` folder:
 | [COMPONENTS.md](doc/COMPONENTS.md) | React component documentation |
 | [SECURITY.md](doc/SECURITY.md) | Security measures and best practices |
 | [DEPLOYMENT.md](doc/DEPLOYMENT.md) | Deployment guide for various platforms |
+| [TROUBLESHOOTING.md](doc/TROUBLESHOOTING.md) | Common issues and solutions |
+| [GLOSSARY.md](doc/GLOSSARY.md) | Terms and definitions |
+| [CHANGELOG.md](doc/CHANGELOG.md) | Version history |
 
 ---
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Client                                │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │   Pages     │  │ Components  │  │  Zustand    │         │
-│  │  (Next.js)  │  │   (React)   │  │   Store     │         │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘         │
-│         └────────────────┴────────────────┘                 │
-│                          │                                   │
-│  ┌───────────────────────┴───────────────────────┐         │
-│  │              Game Engine                       │         │
-│  │  types.ts │ rules.ts │ ai.ts │ scoring.ts     │         │
-│  └───────────────────────────────────────────────┘         │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                        Server                                │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │ API Routes  │  │   Prisma    │  │   SQLite    │         │
-│  │             │  │     ORM     │  │   Database  │         │
-│  └─────────────┘  └─────────────┘  └─────────────┘         │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        Pages[Pages<br/>Next.js App Router]
+        Components[Components<br/>React 19]
+        Zustand[Zustand Store<br/>State Management]
+        
+        subgraph Engine["Game Engine"]
+            Types[types.ts]
+            Rules[rules.ts]
+            AI[ai.ts]
+            Scoring[scoring.ts]
+        end
+        
+        Pages --> Components
+        Components --> Zustand
+        Zustand --> Engine
+    end
+    
+    subgraph Server["Server Layer"]
+        API[API Routes<br/>REST Endpoints]
+        Prisma[Prisma ORM]
+        DB[SQLite Database]
+        
+        API --> Prisma
+        Prisma --> DB
+    end
+    
+    Client -->|HTTP| Server
 ```
 
 ### Project Structure
@@ -302,31 +334,43 @@ See [API_REFERENCE.md](doc/API_REFERENCE.md) for complete documentation.
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
+**Quick Start:**
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes following our code standards
+4. Commit with conventional commit messages
+5. Push and open a Pull Request
 
-### Code Standards
-
-- Write TypeScript with full type annotations
-- Add JSDoc comments to all public functions
+**Code Standards:**
+- TypeScript with full type annotations
+- JSDoc comments for public functions
 - Follow existing code style and patterns
-- Include tests for new features
+- Test your changes thoroughly
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+**What this means:**
+- ✅ Free to use for any purpose (commercial or personal)
+- ✅ Free to modify and distribute
+- ✅ Free to create derivative works
+- ✅ Patent grant included
+- 📝 Must include license and copyright notice
+- 📝 Must state changes if you modify files
+
+This is a permissive open-source license that allows maximum freedom while protecting contributors.
 
 ---
 
 ## Acknowledgments
-
+- Written by Dustin T Hughes with aid from the latest ai coding agents. 
 - Card SVG designs from [deck.of" cards](https://deck.of.cards)
 - Game rules based on [Bicycle Cards Official Rules](https://bicyclecards.com/how-to-play/spades)
 - Built with [Next.js](https://nextjs.org), [React](https://react.dev), and [Prisma](https://prisma.io)

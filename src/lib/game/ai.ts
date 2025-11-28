@@ -33,6 +33,7 @@ import {
   countHighCards,
   countSuits,
 } from "./deck";
+import { BID_CONSTANTS, AI_CONSTANTS } from "./constants";
 
 /**
  * Context provided to AI for decision making.
@@ -124,25 +125,25 @@ export function getHintBid(hand: Card[], partnerBid: number | null): number {
   let baseBid = estimateMinTricks(hand);
   
   // Adjust based on spades
-  if (spadeCount >= 4) baseBid += 1;
-  if (spadeCount >= 6) baseBid += 1;
+  if (spadeCount >= AI_CONSTANTS.SPADE_COUNT_THRESHOLD_1) baseBid += 1;
+  if (spadeCount >= AI_CONSTANTS.SPADE_COUNT_THRESHOLD_2) baseBid += 1;
   
   // Adjust based on suit distribution
   const voids = Object.values(suitCounts).filter((c) => c === 0).length;
   const singletons = Object.values(suitCounts).filter((c) => c === 1).length;
-  baseBid += voids * 0.5 + singletons * 0.3;
+  baseBid += voids * AI_CONSTANTS.VOID_SUIT_MULTIPLIER + singletons * AI_CONSTANTS.SINGLETON_SUIT_MULTIPLIER;
   
   // Consider partner's bid for team balance
   let bid = Math.round(baseBid);
   if (partnerBid !== null && partnerBid >= 0) {
     const teamTotal = bid + partnerBid;
-    if (teamTotal > 11) {
-      bid = Math.max(1, bid - 1);
+    if (teamTotal > BID_CONSTANTS.MEDIUM_AI_TEAM_TOTAL_THRESHOLD) {
+      bid = Math.max(BID_CONSTANTS.MIN_BID, bid - 1);
     }
   }
   
   // Clamp to valid range
-  return Math.max(1, Math.min(13, bid));
+  return Math.max(BID_CONSTANTS.MIN_BID, Math.min(BID_CONSTANTS.MAX_BID, bid));
 }
 
 /**
@@ -194,8 +195,8 @@ export function calculateAIBid(
       // Consider partner's bid
       if (partnerBid !== null && partnerBid >= 0) {
         const teamTotal = bid + partnerBid;
-        if (teamTotal > 11) {
-          bid = Math.max(1, bid - 1);
+        if (teamTotal > BID_CONSTANTS.MEDIUM_AI_TEAM_TOTAL_THRESHOLD) {
+          bid = Math.max(BID_CONSTANTS.MIN_BID, bid - 1);
         }
       }
       break;
@@ -207,24 +208,24 @@ export function calculateAIBid(
       // Adjust based on partner's bid for team balance
       if (partnerBid !== null && partnerBid >= 0) {
         const teamTotal = bid + partnerBid;
-        if (teamTotal > 12) {
-          bid = Math.max(1, bid - 2);
-        } else if (teamTotal < 6) {
-          bid = Math.min(8, bid + 1);
+        if (teamTotal > BID_CONSTANTS.HARD_AI_TEAM_TOTAL_HIGH) {
+          bid = Math.max(BID_CONSTANTS.MIN_BID, bid - 2);
+        } else if (teamTotal < BID_CONSTANTS.HARD_AI_TEAM_TOTAL_LOW) {
+          bid = Math.min(BID_CONSTANTS.HARD_AI_MAX_BID_ADJUSTMENT, bid + 1);
         }
       }
       
       // Consider nil if hand is very weak
-      if (baseBid <= 1 && spadeCount <= 2 && highCards === 0) {
-        if (Math.random() < 0.3) {
-          return 0; // Nil bid
+      if (baseBid <= 1 && spadeCount <= AI_CONSTANTS.NIL_MAX_SPADE_COUNT && highCards === 0) {
+        if (Math.random() < AI_CONSTANTS.HARD_AI_NIL_CHANCE) {
+          return BID_CONSTANTS.NIL_BID; // Nil bid
         }
       }
       break;
   }
   
   // Clamp bid to valid range
-  return Math.max(1, Math.min(13, Math.round(bid)));
+  return Math.max(BID_CONSTANTS.MIN_BID, Math.min(BID_CONSTANTS.MAX_BID, Math.round(bid)));
 }
 
 /**
@@ -242,7 +243,7 @@ export function calculateAIBid(
 export function selectAICard(
   context: AIContext
 ): Card {
-  const { player, partner, currentTrick, spadesBroken, difficulty, cardsPlayed } = context;
+  const { player, currentTrick, spadesBroken, difficulty } = context;
   const hand = player.hand;
   
   // Safety check for empty hand
@@ -285,13 +286,13 @@ export function selectAICard(
  * @param {Trick|null} currentTrick - Current trick state
  * @returns {Card} Selected card
  */
-function selectEasyCard(validPlays: Card[], currentTrick: Trick | null): Card {
+function selectEasyCard(validPlays: Card[], _currentTrick: Trick | null): Card {
   if (validPlays.length === 0) {
     throw new Error("No valid plays available");
   }
   
-  // Random selection with 70% chance
-  if (Math.random() < 0.7 || validPlays.length === 1) {
+  // Random selection with configured chance
+  if (Math.random() < AI_CONSTANTS.EASY_AI_RANDOM_CHANCE || validPlays.length === 1) {
     return validPlays[Math.floor(Math.random() * validPlays.length)];
   }
   
@@ -319,8 +320,8 @@ function selectEasyCard(validPlays: Card[], currentTrick: Trick | null): Card {
 function selectMediumCard(
   validPlays: Card[],
   currentTrick: Trick | null,
-  player: Player,
-  spadesBroken: boolean
+  _player: Player,
+  _spadesBroken: boolean
 ): Card {
   if (validPlays.length === 0) {
     throw new Error("No valid plays available");
@@ -337,8 +338,8 @@ function selectMediumCard(
     if (nonSpades.length > 0) {
       // Sort by rank descending
       nonSpades.sort((a, b) => RANK_VALUES[b.rank] - RANK_VALUES[a.rank]);
-      // Lead with a high card 60% of the time
-      if (Math.random() < 0.6) {
+      // Lead with a high card with configured probability
+      if (Math.random() < AI_CONSTANTS.MEDIUM_AI_HIGH_CARD_CHANCE) {
         return nonSpades[0];
       }
       return nonSpades[Math.floor(Math.random() * nonSpades.length)];
@@ -408,9 +409,9 @@ function selectHardCard(
 function selectHardLead(
   validPlays: Card[],
   player: Player,
-  partner: Player,
-  remainingCards: Card[],
-  spadesBroken: boolean
+  _partner: Player,
+  _remainingCards: Card[],
+  _spadesBroken: boolean
 ): Card {
   if (validPlays.length === 0) {
     throw new Error("No valid plays available");
@@ -462,7 +463,7 @@ function selectHardFollow(
   validPlays: Card[],
   currentTrick: Trick,
   context: AIContext,
-  remainingCards: Card[]
+  _remainingCards: Card[]
 ): Card {
   if (validPlays.length === 0) {
     throw new Error("No valid plays available");
@@ -472,7 +473,7 @@ function selectHardFollow(
     return validPlays[0];
   }
   
-  const { player, partner } = context;
+  const { player } = context;
   const partnerPlayed = currentTrick.cards.find(
     (c) => c.player === getPartner(player.position)
   );

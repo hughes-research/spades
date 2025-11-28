@@ -15,6 +15,9 @@ Welcome to the Spades card game documentation. This index provides an overview o
 | [COMPONENTS.md](COMPONENTS.md) | React component library | Frontend Developers |
 | [SECURITY.md](SECURITY.md) | Security implementation | DevOps, Security |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Deployment instructions | DevOps |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues and solutions | All Users |
+| [GLOSSARY.md](GLOSSARY.md) | Terms and definitions | All Users |
+| [CHANGELOG.md](CHANGELOG.md) | Version history and changes | All Users |
 
 ---
 
@@ -86,6 +89,31 @@ Deployment guide covering:
 - Platform-specific guides (Vercel, Railway)
 - Performance optimization
 
+### [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+Common issues and solutions:
+- Development problems
+- Runtime errors
+- Deployment issues
+- Performance optimization
+- Browser compatibility
+
+### [GLOSSARY.md](GLOSSARY.md)
+
+Comprehensive terminology:
+- Game terms and rules
+- Technical definitions
+- Data model terms
+- AI and UI concepts
+
+### [CHANGELOG.md](CHANGELOG.md)
+
+Version history:
+- Release notes
+- Feature additions
+- Bug fixes
+- Breaking changes
+
 ---
 
 ## Getting Started
@@ -123,7 +151,7 @@ All documentation follows these standards:
 
 ### Format
 - Markdown with GitHub Flavored Markdown (GFM)
-- ASCII diagrams for architecture visualization
+- Mermaid diagrams for architecture visualization
 - Code blocks with syntax highlighting
 - Tables for structured data
 

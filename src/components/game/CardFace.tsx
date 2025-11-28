@@ -41,7 +41,7 @@ export const CardFace = memo(function CardFace({
   rank,
   faceDown = false,
   width = 100,
-  height = 145,
+  height: _height = 145,
   className = "",
 }: CardFaceProps) {
   // Generate the file path for the card image

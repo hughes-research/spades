@@ -67,10 +67,16 @@ Generated using `crypto.randomUUID()` when starting a new game.
 
 **Phase Transitions:**
 
-```
-waiting → dealing → bidding → playing → round_end → (playing | game_over)
-                                              ↑
-                                              └──────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> waiting
+    waiting --> dealing
+    dealing --> bidding
+    bidding --> playing
+    playing --> round_end
+    round_end --> playing: Continue game
+    round_end --> game_over: Game finished
+    game_over --> [*]
 ```
 
 ### Player State
@@ -342,61 +348,31 @@ const validPlays = useMemo(() => {
 
 ### Bidding Flow
 
-```
-placeBid("west", 3)
-       │
-       ▼
-Update west.bid = 3
-       │
-       ▼
-Check all bids complete? ─── No ──→ currentPlayer = "north"
-       │
-      Yes
-       │
-       ▼
-phase = "playing"
-       │
-       ▼
-currentPlayer = "west" (left of dealer)
+```mermaid
+flowchart TD
+    PlaceBid[placeBid "west", 3] --> UpdateBid[Update west.bid = 3]
+    UpdateBid --> CheckComplete{All bids complete?}
+    CheckComplete -->|No| NextBidder[currentPlayer = "north"]
+    CheckComplete -->|Yes| SetPhase[phase = "playing"]
+    SetPhase --> SetCurrentPlayer[currentPlayer = "west"<br/>left of dealer]
 ```
 
 ### Trick Flow
 
-```
-playCard("south", card)
-       │
-       ▼
-Remove card from hand
-       │
-       ▼
-Add to currentTrick
-       │
-       ▼
-Trick complete? ─── No ──→ currentPlayer = next
-       │
-      Yes
-       │
-       ▼
-finishTrick()
-       │
-       ▼
-Determine winner
-       │
-       ▼
-Round complete? ─── No ──→ currentPlayer = winner
-       │
-      Yes
-       │
-       ▼
-finishRound()
-       │
-       ▼
-Game won? ─── No ──→ phase = "round_end"
-       │
-      Yes
-       │
-       ▼
-phase = "game_over"
+```mermaid
+flowchart TD
+    PlayCard[playCard "south", card] --> RemoveCard[Remove card from hand]
+    RemoveCard --> AddTrick[Add to currentTrick]
+    AddTrick --> TrickComplete{Trick complete?}
+    TrickComplete -->|No| NextPlayer[currentPlayer = next]
+    TrickComplete -->|Yes| FinishTrick[finishTrick]
+    FinishTrick --> DetermineWinner[Determine winner]
+    DetermineWinner --> RoundComplete{Round complete?}
+    RoundComplete -->|No| SetWinner[currentPlayer = winner]
+    RoundComplete -->|Yes| FinishRound[finishRound]
+    FinishRound --> GameWon{Game won?}
+    GameWon -->|No| RoundEnd[phase = "round_end"]
+    GameWon -->|Yes| GameOver[phase = "game_over"]
 ```
 
 ---

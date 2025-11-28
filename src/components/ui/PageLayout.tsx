@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Breadcrumbs } from "./Breadcrumbs";
 import { Button } from "./Button";
-import { FONTS, COLORS, ANIMATION_VARIANTS } from "@/lib/styles";
+import { FONTS, ANIMATION_VARIANTS } from "@/lib/styles";
 
 interface BreadcrumbItem {
   label: string;

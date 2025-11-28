@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
  * Security headers proxy for all routes.
  * Adds essential security headers to protect against common web vulnerabilities.
  */
-export function proxy(request: NextRequest) {
+export function proxy(_request: NextRequest) {
   const response = NextResponse.next();
 
   // Content Security Policy - Prevents XSS attacks

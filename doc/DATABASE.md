@@ -17,58 +17,60 @@ The Spades application uses SQLite as its database, managed through Prisma ORM. 
 
 ## Schema Diagram
 
-```
-┌─────────────────────┐
-│        Game         │
-├─────────────────────┤
-│ id           PK     │
-│ createdAt           │
-│ updatedAt           │
-│ status              │
-│ difficulty          │
-│ yourTeamScore       │
-│ aiTeamScore         │
-│ yourTeamBags        │
-│ aiTeamBags          │
-│ winner              │
-│ currentRound        │
-└─────────┬───────────┘
-          │
-          │ 1:N
-          ▼
-┌─────────────────────┐
-│       Round         │
-├─────────────────────┤
-│ id           PK     │
-│ gameId       FK     │
-│ roundNumber         │
-│ yourBid             │
-│ partnerBid          │
-│ opponent1Bid        │
-│ opponent2Bid        │
-│ yourTricks          │
-│ partnerTricks       │
-│ opponent1Tricks     │
-│ opponent2Tricks     │
-│ yourTeamScore       │
-│ aiTeamScore         │
-│ yourTeamBags        │
-│ aiTeamBags          │
-│ completed           │
-└─────────────────────┘
-
-┌─────────────────────┐    ┌─────────────────────┐
-│      Settings       │    │       Stats         │
-├─────────────────────┤    ├─────────────────────┤
-│ id           PK     │    │ id           PK     │
-│ difficulty          │    │ gamesPlayed         │
-│ animationSpeed      │    │ gamesWon            │
-│ showTutorial        │    │ gamesLost           │
-└─────────────────────┘    │ totalRounds         │
-                           │ highScore           │
-                           │ winStreak           │
-                           │ bestStreak          │
-                           └─────────────────────┘
+```mermaid
+erDiagram
+    Game ||--o{ Round : "has"
+    
+    Game {
+        string id PK
+        datetime createdAt
+        datetime updatedAt
+        string status
+        string difficulty
+        int yourTeamScore
+        int aiTeamScore
+        int yourTeamBags
+        int aiTeamBags
+        string winner
+        int currentRound
+    }
+    
+    Round {
+        string id PK
+        string gameId FK
+        int roundNumber
+        int yourBid
+        int partnerBid
+        int opponent1Bid
+        int opponent2Bid
+        int yourTricks
+        int partnerTricks
+        int opponent1Tricks
+        int opponent2Tricks
+        int yourTeamScore
+        int aiTeamScore
+        int yourTeamBags
+        int aiTeamBags
+        boolean completed
+    }
+    
+    Settings {
+        string id PK
+        string difficulty
+        string animationSpeed
+        boolean showTutorial
+    }
+    
+    Stats {
+        string id PK
+        int gamesPlayed
+        int gamesWon
+        int gamesLost
+        int totalRounds
+        int highScore
+        int winStreak
+        int bestStreak
+    }
 ```
 
 ---
